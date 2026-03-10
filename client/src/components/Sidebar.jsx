@@ -5,9 +5,9 @@ import {
   Eye,
   FileSearch,
   FileOutput,
-  BarChart3,
-  Shield
+  BarChart3
 } from 'lucide-react';
+import cccLogo from '../assets/ccc-logo.png';
 
 const navItems = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -22,7 +22,7 @@ export default function Sidebar() {
     <aside className="sidebar">
       <div className="sidebar-header">
         <div className="sidebar-logo">
-          <Shield size={20} />
+          <img src={cccLogo} alt="CCC Logo" />
         </div>
         <div className="sidebar-title">
           <h1>CDRRMO CCTV</h1>
@@ -48,7 +48,7 @@ export default function Sidebar() {
       <div className="sidebar-footer">
         <p className="sidebar-footer-text">
           CDRRMO CCTV Unit &copy; 2026<br />
-          Communication Command Center
+          Communication Command Central
         </p>
       </div>
     </aside>

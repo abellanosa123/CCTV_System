@@ -13,7 +13,16 @@ exports.getReviews = async (req, res) => {
         { location: searchRegex },
         { incidentType: searchRegex },
         { description: searchRegex },
-        { dateRequested: searchRegex }
+        { dateRequested: searchRegex },
+        { timeRequested: searchRegex },
+        { phoneNumber: searchRegex },
+        { incidentDate: searchRegex },
+        { incidentTime: searchRegex },
+        { reviewedBy: searchRegex },
+        { status: searchRegex },
+        { outcome: searchRegex },
+        { comments: searchRegex },
+        { caughtOnCam: searchRegex }
       ];
     }
 

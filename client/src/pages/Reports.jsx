@@ -1,16 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import { getReportData } from '../services/api';
 import { toast } from 'react-toastify';
-import { Download, FileText, FileSpreadsheet, BarChart3, Eye, FileSearch, FileOutput } from 'lucide-react';
+import { Download, FileText, FileSpreadsheet, BarChart3, Eye, FileSearch, FileOutput, X, Settings } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+import cccLogo from '../assets/ccc-logo.png';
+import cdrrmoLogo from '../assets/cdrrmo-logo-transparent.png';
 
 export default function Reports() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  const [signatories, setSignatories] = useState(() => {
+    const saved = localStorage.getItem('cctv_signatories');
+    if (saved) return JSON.parse(saved);
+    return {
+      preparedBy: { name: 'MICHELLE R. SALES', title: 'CCTV In-Charge' },
+      checkedBy: { name: 'RITCHEL B. AGNE, RN, EMT', title: 'CCC Section Head' },
+      noted: { name: 'ARIAN JOHNSON B. CAGA-ANAN', title: 'Operations and Warning Division Head' },
+      approved: { name: 'ALAN J. COMISO', title: 'CGDH-I (CDRRMO)' }
+    };
+  });
+  const [showSigModal, setShowSigModal] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem('cctv_signatories', JSON.stringify(signatories));
+  }, [signatories]);
 
   const fetchReport = async () => {
     setLoading(true);
@@ -35,6 +53,26 @@ export default function Reports() {
     if (startDate) return `From ${startDate}`;
     if (endDate) return `Up to ${endDate}`;
     return 'All Records';
+  };
+
+  const formatDateTime = (dateStr) => {
+    if (!dateStr || !dateStr.includes('T')) return dateStr || '—';
+    const d = new Date(dateStr);
+    return isNaN(d) ? dateStr : d.toLocaleString('en-US', {
+      year: 'numeric', month: 'short', day: 'numeric',
+      hour: 'numeric', minute: '2-digit', hour12: true
+    });
+  };
+
+  const formatTimeInfo = (t) => {
+    if (!t) return '';
+    try {
+      let [h, m] = t.split(':');
+      h = parseInt(h, 10);
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12 || 12;
+      return `${h}:${m} ${ampm}`;
+    } catch { return t; }
   };
 
   // ─── PDF EXPORTS ────────────────────────────────────────────────────────────
@@ -103,8 +141,8 @@ export default function Reports() {
         r.incidentDate || '—',
         r.incidentTime || '—',
         r.incidentType || '—',
-        (r.description || '').slice(0, 40),
-        r.status || 'Pending',
+        (r.description || '').slice(0, 50),
+        r.status === 'Pending' ? 'Not Released' : (r.status || 'Not Released'),
         r.reviewedBy || '—',
         r.outcome || '—',
         (r.comments || '').slice(0, 30)
@@ -139,7 +177,7 @@ export default function Reports() {
       startY: 36,
       head: [['Release Date', 'Requested By', 'Phone', 'Location', 'Incident Date', 'Incident Time', 'Incident Type', 'Description', 'Reviewed By', 'Outcome', 'Comments']],
       body: data.releases.map(r => [
-        r.releaseDate || '—',
+        formatDateTime(r.releaseDate),
         r.requestedBy || r.name || '—',
         r.phoneNumber || '—',
         r.location || '—',
@@ -194,7 +232,7 @@ export default function Reports() {
       'Incident Time': r.incidentTime || '',
       'Incident Type': r.incidentType || '',
       'Description': r.description || '',
-      'Status': r.status || 'Pending',
+      'Status': r.status === 'Pending' ? 'Not Released' : (r.status || 'Not Released'),
       'Reviewed By': r.reviewedBy || '',
       'Outcome': r.outcome || '',
       'Comments': r.comments || ''
@@ -209,7 +247,7 @@ export default function Reports() {
     if (!data || !data.releases.length) return toast.warn('No release data to export');
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.json_to_sheet(data.releases.map(r => ({
-      'Release Date': r.releaseDate || '',
+      'Release Date': formatDateTime(r.releaseDate),
       'Requested By': r.requestedBy || r.name || '',
       'Phone Number': r.phoneNumber || '',
       'Location': r.location || '',
@@ -281,7 +319,7 @@ export default function Reports() {
       autoTable(doc, {
         startY: 36,
         head: [['Date', 'Requestor', 'Location', 'Incident Date', 'Incident Type', 'Status', 'Reviewed By', 'Outcome']],
-        body: data.reviews.map(r => [r.dateRequested || '—', r.name || '—', r.location || '—', r.incidentDate || '—', r.incidentType || '—', r.status || 'Pending', r.reviewedBy || '—', r.outcome || '—']),
+        body: data.reviews.map(r => [r.dateRequested || '—', r.name || '—', r.location || '—', r.incidentDate || '—', r.incidentType || '—', r.status === 'Pending' ? 'Not Released' : (r.status || 'Not Released'), r.reviewedBy || '—', r.outcome || '—']),
         theme: 'grid',
         headStyles: { fillColor: [139, 92, 246], textColor: 255, fontSize: 8 },
         bodyStyles: { fontSize: 7 },
@@ -296,7 +334,7 @@ export default function Reports() {
       autoTable(doc, {
         startY: 36,
         head: [['Release Date', 'Requested By', 'Location', 'Incident Type', 'Description', 'Reviewed By', 'Outcome']],
-        body: data.releases.map(r => [r.releaseDate || '—', r.requestedBy || r.name || '—', r.location || '—', r.incidentType || '—', (r.description || '').slice(0, 40), r.reviewedBy || '—', r.outcome || '—']),
+        body: data.releases.map(r => [formatDateTime(r.releaseDate), r.requestedBy || r.name || '—', r.location || '—', r.incidentType || '—', (r.description || '').slice(0, 40), r.reviewedBy || '—', r.outcome || '—']),
         theme: 'grid',
         headStyles: { fillColor: [16, 185, 129], textColor: 255, fontSize: 8 },
         bodyStyles: { fontSize: 7 },
@@ -306,6 +344,226 @@ export default function Reports() {
 
     doc.save('CDRRMO_CCTV_Complete_Report.pdf');
     toast.success('Complete PDF exported!');
+  };
+
+  const exportReadyToSubmitPDF = async () => {
+    if (!data) return toast.warn('No data to export');
+    
+    const loadB64 = async (src) => {
+      try {
+        const res = await fetch(src);
+        const blob = await res.blob();
+        return new Promise(resolve => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.readAsDataURL(blob);
+        });
+      } catch (e) { return null; }
+    };
+    
+    const [cccB64, cdrrmoB64] = await Promise.all([loadB64(cccLogo), loadB64(cdrrmoLogo)]);
+
+    const doc = new jsPDF({ orientation: 'landscape' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    
+    const monthYear = startDate && endDate 
+      ? `${new Date(startDate).toLocaleString('default', { month: 'long', year: 'numeric' })}`
+      : 'the selected period';
+
+    const addLetterHead = () => {
+      // Dark purple banner with outer border line style
+      doc.setDrawColor(80, 50, 110);
+      doc.setFillColor(36, 17, 65);
+      doc.roundedRect(8, 6, pageWidth - 16, 26, 2, 2, 'FD');
+      
+      // Top subtitle
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(200, 200, 215);
+      doc.text('C I T Y   G O V E R N M E N T   O F   M A L A Y B A L A Y', pageWidth / 2, 12, { align: 'center' });
+      
+      // Main Title
+      doc.setFontSize(16);
+      doc.setTextColor(255, 120, 255); // Vibrant pinkish-purple
+      doc.text('CITY DISASTER RISK REDUCTION & MANAGEMENT OFFICE', pageWidth / 2, 19, { align: 'center' });
+      
+      // Pill bg
+      doc.setDrawColor(0, 150, 200);
+      doc.setFillColor(15, 30, 45); 
+      const pillWidth = 90;
+      doc.roundedRect((pageWidth / 2) - (pillWidth / 2), 22, pillWidth, 6, 3, 3, 'FD');
+      
+      // Pill text
+      doc.setFontSize(8);
+      doc.setTextColor(15, 235, 220); // Cyan
+      doc.text('C O M M U N I C A T I O N   C O M M A N D   C E N T R A L', pageWidth / 2, 26, { align: 'center' });
+      
+      // Set up Logos container logic
+      
+      // Dynamically load images or use placeholders
+      if (cdrrmoB64) {
+        doc.addImage(cdrrmoB64, 'PNG', 12, 8, 22, 22);
+      } else {
+        doc.setDrawColor(80, 50, 110); doc.setFillColor(20, 10, 35); doc.circle(22, 19, 10, 'FD'); 
+      }
+      
+      if (cccB64) {
+        doc.addImage(cccB64, 'PNG', pageWidth - 32, 6, 21, 26);
+      } else {
+        doc.setDrawColor(80, 50, 110); doc.setFillColor(20, 10, 35); doc.circle(pageWidth - 22, 19, 10, 'FD');
+      }
+      
+      // Reset text color to black for the rest of the document
+      doc.setTextColor(0, 0, 0);
+    };
+
+    // First Page
+    addLetterHead();
+    
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`FOOTAGE REVIEW PER REQUEST`, pageWidth / 2, 42, { align: 'center' });
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'italic');
+    doc.text(`For the month of ${monthYear}`, pageWidth / 2, 47, { align: 'center' });
+
+    const reviewBody = data.reviews.map((r, i) => [
+      i + 1,
+      r.name || '—',
+      r.dateRequested || '—',
+      r.timeRequested || '—',
+      r.incidentType || '—',
+      r.description || '—',
+      r.caughtOnCam === 'Captured' ? '/' : '',
+      r.caughtOnCam === 'Uncaptured' ? '/' : ''
+    ]);
+
+    autoTable(doc, {
+      startY: 55,
+      head: [
+        [
+          { content: '#', rowSpan: 2, styles: { halign: 'center', valign: 'middle' } },
+          { content: 'Requesting Party', rowSpan: 2, styles: { halign: 'center', valign: 'middle' } },
+          { content: 'Date/Time', colSpan: 2, styles: { halign: 'center' } },
+          { content: 'Incident Type', rowSpan: 2, styles: { halign: 'center', valign: 'middle' } },
+          { content: 'Details', rowSpan: 2, styles: { halign: 'center', valign: 'middle' } },
+          { content: 'Caught on Cam', colSpan: 2, styles: { halign: 'center' } }
+        ],
+        [
+          { content: 'Date', styles: { halign: 'center' } },
+          { content: 'Time', styles: { halign: 'center' } },
+          { content: 'Captured', styles: { halign: 'center' } },
+          { content: 'Uncaptured', styles: { halign: 'center' } }
+        ]
+      ],
+      body: reviewBody,
+      theme: 'grid',
+      headStyles: { fillColor: [220, 220, 220], textColor: 0, fontStyle: 'bold', fontSize: 8, lineColor: [0, 0, 0], lineWidth: 0.1 },
+      bodyStyles: { fontSize: 8, textColor: 0, lineColor: [0, 0, 0], lineWidth: 0.1 },
+      styles: { cellPadding: 2, font: 'helvetica' },
+      columnStyles: { 0: { cellWidth: 10, halign: 'center' }, 2: { cellWidth: 20 }, 3: { cellWidth: 15 }, 6: { cellWidth: 15, halign: 'center' }, 7: { cellWidth: 15, halign: 'center' } }
+    });
+
+    // Second Page
+    doc.addPage();
+    addLetterHead();
+
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`VIDEO FOOTAGE RELEASED`, pageWidth / 2, 42, { align: 'center' });
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'italic');
+    doc.text(`For the month of ${monthYear}`, pageWidth / 2, 47, { align: 'center' });
+
+    const releaseBody = data.releases.map(r => [
+      r.requestedBy || r.name || '—',
+      r.incidentDate || '—',
+      r.incidentTime || '—',
+      r.description || '—'
+    ]);
+
+    autoTable(doc, {
+      startY: 55,
+      head: [
+        [
+          { content: 'Requesting Party', rowSpan: 2, styles: { halign: 'center', valign: 'middle' } },
+          { content: 'Incident', colSpan: 2, styles: { halign: 'center' } },
+          { content: 'Details', rowSpan: 2, styles: { halign: 'center', valign: 'middle' } }
+        ],
+        [
+          { content: 'Date', styles: { halign: 'center' } },
+          { content: 'Time', styles: { halign: 'center' } }
+        ]
+      ],
+      body: releaseBody,
+      theme: 'grid',
+      headStyles: { fillColor: [220, 220, 220], textColor: 0, fontStyle: 'bold', fontSize: 8, lineColor: [0, 0, 0], lineWidth: 0.1 },
+      bodyStyles: { fontSize: 8, textColor: 0, lineColor: [0, 0, 0], lineWidth: 0.1 },
+      styles: { cellPadding: 2, font: 'helvetica' },
+      columnStyles: { 1: { cellWidth: 25 }, 2: { cellWidth: 20 } }
+    });
+    
+    let currentY = doc.lastAutoTable.finalY + 15;
+    
+    // Top Incidents and Locations
+    const incidents = {};
+    const locations = {};
+    data.reviews.forEach(r => {
+      if (r.incidentType) incidents[r.incidentType] = (incidents[r.incidentType] || 0) + 1;
+      if (r.location) locations[r.location] = (locations[r.location] || 0) + 1;
+    });
+    const sortedIncidents = Object.entries(incidents).sort((a,b) => b[1]-a[1]).slice(0,9);
+    const sortedLocations = Object.entries(locations).sort((a,b) => b[1]-a[1]).slice(0,11);
+
+    if (currentY > pageHeight - 80) { doc.addPage(); currentY = 20; }
+
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('TOP INCIDENT', 14, currentY);
+    doc.text('TOP LOCATION', 80, currentY);
+    
+    doc.setFont('helvetica', 'normal');
+    sortedIncidents.forEach((item, idx) => {
+      doc.text(`${item[1]} ${item[0]}`, 14, currentY + 6 + (idx * 5));
+    });
+    sortedLocations.forEach((item, idx) => {
+      doc.text(`${item[1]} ${item[0]}`, 80, currentY + 6 + (idx * 5));
+    });
+
+    const topsHeight = Math.max(sortedIncidents.length, sortedLocations.length) * 5 + 15;
+    currentY += topsHeight;
+
+    if (currentY > pageHeight - 40) { doc.addPage(); currentY = 20; }
+    currentY += 20;
+
+    // Signatories
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    
+    const cw = (pageWidth - 28) / 4;
+    doc.text('Prepared by:', 14, currentY);
+    doc.text('Checked by:', 14 + cw, currentY);
+    doc.text('Noted:', 14 + cw*2, currentY);
+    doc.text('Approved:', 14 + cw*3, currentY);
+
+    currentY += 15;
+
+    doc.setFont('helvetica', 'bold');
+    doc.text(signatories.preparedBy.name, 14, currentY);
+    doc.text(signatories.checkedBy.name, 14 + cw, currentY);
+    doc.text(signatories.noted.name, 14 + cw*2, currentY);
+    doc.text(signatories.approved.name, 14 + cw*3, currentY);
+
+    currentY += 5;
+    doc.setFont('helvetica', 'normal');
+    doc.text(signatories.preparedBy.title, 14, currentY);
+    doc.text(signatories.checkedBy.title, 14 + cw, currentY);
+    doc.text(signatories.noted.title, 14 + cw*2, currentY);
+    doc.text(signatories.approved.title, 14 + cw*3, currentY);
+
+    doc.save('Ready_To_Submit_Report.pdf');
+    toast.success('Ready-to-Submit PDF exported!');
   };
 
   const exportAllExcel = () => {
@@ -349,7 +607,7 @@ export default function Reports() {
 
     if (data.releases.length > 0) {
       const ws = XLSX.utils.json_to_sheet(data.releases.map(r => ({
-        'Release Date': r.releaseDate || '', 'Requested By': r.requestedBy || r.name || '',
+        'Release Date': formatDateTime(r.releaseDate), 'Requested By': r.requestedBy || r.name || '',
         'Phone': r.phoneNumber || '', 'Location': r.location || '', 'Incident Date': r.incidentDate || '',
         'Incident Time': r.incidentTime || '', 'Incident Type': r.incidentType || '',
         'Description': r.description || '', 'Reviewed By': r.reviewedBy || '',
@@ -417,7 +675,13 @@ export default function Reports() {
               <Download size={16} />
               <span>Complete Report — All Logs</span>
             </div>
-            <div className="report-export-btns">
+            <div className="report-export-btns" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <button className="btn btn-primary" onClick={exportReadyToSubmitPDF} disabled={!data} style={{ backgroundColor: '#10b981', borderColor: '#10b981' }}>
+                <FileText size={15} /> Ready-To-Submit PDF
+              </button>
+              <button className="btn btn-secondary" onClick={() => setShowSigModal(true)} title="Edit Signatories">
+                <Settings size={15} /> Signatories
+              </button>
               <button className="btn btn-export-pdf" onClick={exportAllPDF} disabled={!data}>
                 <FileText size={15} /> Export All as PDF
               </button>
@@ -517,13 +781,19 @@ export default function Reports() {
                   <tbody>
                     {data.reviews.map((rev, i) => (
                       <tr key={i}>
-                        <td>{rev.dateRequested}</td>
+                        <td>
+                          {rev.dateRequested}<br />
+                          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{formatTimeInfo(rev.timeRequested)}</span>
+                        </td>
                         <td>{rev.name}</td>
                         <td>{rev.location}</td>
-                        <td>{rev.incidentDate}</td>
-                        <td><span className="badge pending">{rev.incidentType}</span></td>
+                        <td>
+                          {rev.incidentDate}<br />
+                          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{formatTimeInfo(rev.incidentTime)}</span>
+                        </td>
+                        <td><span className="badge not-released">{rev.incidentType}</span></td>
                         <td title={rev.description}>{rev.description?.slice(0, 50)}{rev.description?.length > 50 ? '...' : ''}</td>
-                        <td><span className={`badge ${rev.status?.toLowerCase() || 'pending'}`}>{rev.status || 'Pending'}</span></td>
+                        <td><span className={`badge ${rev.status && rev.status !== 'Pending' ? rev.status.toLowerCase().replace(' ', '-') : 'not-released'}`}>{rev.status === 'Pending' ? 'Not Released' : (rev.status || 'Not Released')}</span></td>
                         <td>{rev.reviewedBy || '—'}</td>
                         <td>{rev.outcome || '—'}</td>
                       </tr>
@@ -573,10 +843,13 @@ export default function Reports() {
                   <tbody>
                     {data.releases.map((rel, i) => (
                       <tr key={i}>
-                        <td>{rel.releaseDate}</td>
+                        <td>{formatDateTime(rel.releaseDate)}</td>
                         <td>{rel.requestedBy || rel.name}</td>
                         <td>{rel.location}</td>
-                        <td>{rel.incidentDate || '—'}</td>
+                        <td>
+                          {rel.incidentDate || '—'}<br />
+                          {rel.incidentTime && <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{formatTimeInfo(rel.incidentTime)}</span>}
+                        </td>
                         <td><span className="badge released">{rel.incidentType}</span></td>
                         <td title={rel.description}>{rel.description?.slice(0, 50)}{rel.description?.length > 50 ? '...' : ''}</td>
                         <td>{rel.reviewedBy || '—'}</td>
@@ -592,6 +865,46 @@ export default function Reports() {
           </div>
         </>
       ) : null}
+
+      {/* Signatories Configuration Modal */}
+      {showSigModal && (
+        <div className="modal-overlay" onClick={() => setShowSigModal(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '600px', width: '90%' }}>
+            <div className="modal-header">
+              <h3>Edit Report Signatories</h3>
+              <button className="modal-close" onClick={() => setShowSigModal(false)}><X size={18} /></button>
+            </div>
+            <div className="modal-body" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', maxHeight: '60vh', overflowY: 'auto' }}>
+              {Object.keys(signatories).map(key => (
+                <div key={key} style={{ padding: '16px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                  <h4 style={{ textTransform: 'capitalize', marginBottom: '12px', color: 'var(--primary)', fontSize: '14px' }}>
+                    {key.replace(/([A-Z])/g, ' $1').trim()}
+                  </h4>
+                  <div className="form-group" style={{ marginBottom: '10px' }}>
+                    <label className="form-label" style={{ fontSize: '11px' }}>Name</label>
+                    <input 
+                      className="form-input" 
+                      value={signatories[key].name}
+                      onChange={e => setSignatories({...signatories, [key]: {...signatories[key], name: e.target.value}})}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" style={{ fontSize: '11px' }}>Title/Position</label>
+                    <input 
+                      className="form-input" 
+                      value={signatories[key].title}
+                      onChange={e => setSignatories({...signatories, [key]: {...signatories[key], title: e.target.value}})}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-primary" onClick={() => setShowSigModal(false)}>Save Changes</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

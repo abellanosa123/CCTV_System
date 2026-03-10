@@ -77,31 +77,15 @@ exports.getDashboardStats = async (req, res) => {
       .filter(item => item._id)
       .map(item => ({ type: item._id, count: item.count }));
 
-    // Top locations (from all collections)
-    const [obsLocations, revLocations, relLocations] = await Promise.all([
-      Observation.aggregate([
-        { $group: { _id: '$location', count: { $sum: 1 } } },
-        { $sort: { count: -1 } }
-      ]),
-      Review.aggregate([
-        { $group: { _id: '$location', count: { $sum: 1 } } },
-        { $sort: { count: -1 } }
-      ]),
-      Release.aggregate([
-        { $group: { _id: '$location', count: { $sum: 1 } } },
-        { $sort: { count: -1 } }
-      ])
+    // Top locations (from Review logs as requested)
+    const revLocations = await Review.aggregate([
+      { $group: { _id: '$location', count: { $sum: 1 } } },
+      { $sort: { count: -1 } }
     ]);
 
-    const locationMap = {};
-    [...obsLocations, ...revLocations, ...relLocations].forEach(item => {
-      if (item._id) {
-        locationMap[item._id] = (locationMap[item._id] || 0) + item.count;
-      }
-    });
-    const topLocations = Object.entries(locationMap)
-      .map(([location, count]) => ({ location, count }))
-      .sort((a, b) => b.count - a.count)
+    const topLocations = revLocations
+      .filter(item => item._id)
+      .map(item => ({ location: item._id, count: item.count }))
       .slice(0, 8);
 
     // Action taken overview for bar chart

@@ -12,7 +12,9 @@ exports.getObservations = async (req, res) => {
         { location: searchRegex },
         { incidentType: searchRegex },
         { details: searchRegex },
-        { date: searchRegex }
+        { date: searchRegex },
+        { time: searchRegex },
+        { actionTaken: searchRegex }
       ];
     }
 

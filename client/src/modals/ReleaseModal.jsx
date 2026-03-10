@@ -24,9 +24,9 @@ export default function ReleaseModal({ isOpen, onClose, onSubmit }) {
               Select the release date for this footage. The review status will be updated to "Released" and a copy will be recorded in Release Logs.
             </p>
             <div className="form-group">
-              <label className="form-label">Release Date *</label>
+              <label className="form-label">Release Date & Time *</label>
               <input
-                type="date"
+                type="datetime-local"
                 className="form-input"
                 value={releaseDate}
                 onChange={(e) => setReleaseDate(e.target.value)}

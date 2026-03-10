@@ -14,7 +14,15 @@ exports.getReleases = async (req, res) => {
         { incidentType: searchRegex },
         { description: searchRegex },
         { requestedBy: searchRegex },
-        { releaseDate: searchRegex }
+        { releaseDate: searchRegex },
+        { name: searchRegex },
+        { phoneNumber: searchRegex },
+        { incidentDate: searchRegex },
+        { incidentTime: searchRegex },
+        { reviewedBy: searchRegex },
+        { outcome: searchRegex },
+        { comments: searchRegex },
+        { caughtOnCam: searchRegex }
       ];
     }
 
@@ -64,6 +72,7 @@ exports.releaseFoootage = async (req, res) => {
       requestedBy: review.name,
       reviewedBy: review.reviewedBy,
       outcome: review.outcome,
+      caughtOnCam: review.caughtOnCam,
       comments: review.comments
     });
 

@@ -14,6 +14,17 @@ export default function Releases() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
 
+  const formatTimeInfo = (t) => {
+    if (!t) return '';
+    try {
+      let [h, m] = t.split(':');
+      h = parseInt(h, 10);
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12 || 12;
+      return `${h}:${m} ${ampm}`;
+    } catch { return t; }
+  };
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
@@ -99,10 +110,20 @@ export default function Releases() {
             <tbody>
               {releases.map((rel) => (
                 <tr key={rel._id}>
-                  <td>{rel.releaseDate}</td>
+                  <td>
+                    {rel.releaseDate && rel.releaseDate.includes('T') 
+                      ? new Date(rel.releaseDate).toLocaleString('en-US', {
+                          year: 'numeric', month: 'short', day: 'numeric',
+                          hour: 'numeric', minute: '2-digit', hour12: true
+                        })
+                      : rel.releaseDate}
+                  </td>
                   <td>{rel.requestedBy || rel.name}</td>
                   <td>{rel.location}</td>
-                  <td>{rel.incidentDate || '—'}</td>
+                  <td>
+                    {rel.incidentDate || '—'}<br />
+                    {rel.incidentTime && <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{formatTimeInfo(rel.incidentTime)}</span>}
+                  </td>
                   <td><span className="badge released">{rel.incidentType}</span></td>
                   <td title={rel.description}>{rel.description}</td>
                   <td>{rel.reviewedBy || '—'}</td>

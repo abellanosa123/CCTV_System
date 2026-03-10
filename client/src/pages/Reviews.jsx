@@ -20,6 +20,17 @@ export default function Reviews() {
   const [releaseModalOpen, setReleaseModalOpen] = useState(false);
   const [releaseId, setReleaseId] = useState(null);
 
+  const formatTimeInfo = (t) => {
+    if (!t) return '';
+    try {
+      let [h, m] = t.split(':');
+      h = parseInt(h, 10);
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12 || 12;
+      return `${h}:${m} ${ampm}`;
+    } catch { return t; }
+  };
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
@@ -148,14 +159,20 @@ export default function Reviews() {
             <tbody>
               {reviews.map((rev) => (
                 <tr key={rev._id}>
-                  <td>{rev.dateRequested}</td>
+                  <td>
+                    {rev.dateRequested}<br />
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{formatTimeInfo(rev.timeRequested)}</span>
+                  </td>
                   <td>{rev.name}</td>
                   <td>{rev.location}</td>
-                  <td>{rev.incidentDate}</td>
-                  <td><span className="badge pending">{rev.incidentType}</span></td>
                   <td>
-                    <span className={`badge ${rev.status?.toLowerCase() || 'pending'}`}>
-                      {rev.status || 'Pending'}
+                    {rev.incidentDate}<br />
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{formatTimeInfo(rev.incidentTime)}</span>
+                  </td>
+                  <td><span className="badge not-released">{rev.incidentType}</span></td>
+                  <td>
+                    <span className={`badge ${rev.status && rev.status !== 'Pending' ? rev.status.toLowerCase().replace(' ', '-') : 'not-released'}`}>
+                      {rev.status === 'Pending' ? 'Not Released' : (rev.status || 'Not Released')}
                     </span>
                   </td>
                   <td>{rev.reviewedBy || '—'}</td>

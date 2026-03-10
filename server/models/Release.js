@@ -51,6 +51,10 @@ const releaseSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  caughtOnCam: {
+    type: String,
+    trim: true
+  },
   comments: {
     type: String,
     trim: true

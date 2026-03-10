@@ -14,6 +14,7 @@ const initialForm = {
   description: '',
   reviewedBy: '',
   outcome: '',
+  caughtOnCam: '',
   comments: ''
 };
 
@@ -52,6 +53,7 @@ export default function ReviewModal({ isOpen, onClose, onSubmit, editData }) {
         description: editData.description || '',
         reviewedBy: editData.reviewedBy || '',
         outcome: editData.outcome || '',
+        caughtOnCam: editData.caughtOnCam || '',
         comments: editData.comments || ''
       });
     } else {
@@ -318,6 +320,17 @@ export default function ReviewModal({ isOpen, onClose, onSubmit, editData }) {
               <div className="form-group">
                 <label className="form-label">Reviewed By</label>
                 <input type="text" name="reviewedBy" className="form-input" value={form.reviewedBy} onChange={handleChange} placeholder="Reviewer name" />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Caught on Cam</label>
+                <div className="checkbox-group">
+                  {['Captured', 'Uncaptured'].map((opt) => (
+                    <label key={opt} className="checkbox-item">
+                      <input type="radio" name="caughtOnCam" value={opt} checked={form.caughtOnCam === opt} onChange={handleChange} />
+                      {opt}
+                    </label>
+                  ))}
+                </div>
               </div>
               <div className="form-group">
                 <label className="form-label">Outcome</label>

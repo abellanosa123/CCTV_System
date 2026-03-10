@@ -222,6 +222,7 @@ export default function Dashboard() {
         <div className="chart-card">
           <div className="chart-card-header">
             <span className="chart-card-title">Top Locations</span>
+            <span style={{ fontSize: '11px', color: '#6b5b8a' }}>Based on Review Logs</span>
           </div>
           {locationData.length > 0 ? (
             <ResponsiveContainer width="100%" height={280}>

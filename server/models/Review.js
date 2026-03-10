@@ -54,6 +54,11 @@ const reviewSchema = new mongoose.Schema({
     enum: ['Useful', 'Somehow Useful', 'Not Useful', ''],
     default: ''
   },
+  caughtOnCam: {
+    type: String,
+    enum: ['Captured', 'Uncaptured', ''],
+    default: ''
+  },
   // Client Feedback
   comments: {
     type: String,
