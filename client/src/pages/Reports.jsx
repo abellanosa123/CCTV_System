@@ -94,14 +94,14 @@ export default function Reports() {
 
     autoTable(doc, {
       startY: 36,
-      head: [['Date', 'Time', 'Location', 'Incident Type', 'Action Taken', 'Details']],
+      head: [['Date', 'Time', 'Location', 'Incident Type', 'Details', 'Action Taken']],
       body: data.observations.map(o => [
         o.date || '—',
         o.time || '—',
         o.location || '—',
         o.incidentType || '—',
-        o.actionTaken || '—',
-        (o.details || '').slice(0, 60)
+        (o.details || '').slice(0, 60),
+        o.actionTaken || '—'
       ]),
       theme: 'grid',
       headStyles: { fillColor: [139, 92, 246], textColor: 255, fontStyle: 'bold', fontSize: 9 },
@@ -175,7 +175,7 @@ export default function Reports() {
 
     autoTable(doc, {
       startY: 36,
-      head: [['Release Date', 'Requested By', 'Phone', 'Location', 'Incident Date', 'Incident Time', 'Incident Type', 'Description', 'Reviewed By', 'Outcome', 'Comments']],
+      head: [['Release Date', 'Requested By', 'Phone', 'Location', 'Incident Date', 'Incident Time', 'Incident Type', 'Description', 'Reviewed By', 'Comments']],
       body: data.releases.map(r => [
         formatDateTime(r.releaseDate),
         r.requestedBy || r.name || '—',
@@ -186,7 +186,6 @@ export default function Reports() {
         r.incidentType || '—',
         (r.description || '').slice(0, 40),
         r.reviewedBy || '—',
-        r.outcome || '—',
         (r.comments || '').slice(0, 30)
       ]),
       theme: 'grid',
@@ -210,10 +209,10 @@ export default function Reports() {
       'Time': o.time || '',
       'Location': o.location || '',
       'Incident Type': o.incidentType || '',
-      'Action Taken': o.actionTaken || '',
-      'Details': o.details || ''
+      'Details': o.details || '',
+      'Action Taken': o.actionTaken || ''
     })));
-    ws['!cols'] = [{ wch: 14 }, { wch: 10 }, { wch: 20 }, { wch: 22 }, { wch: 18 }, { wch: 40 }];
+    ws['!cols'] = [{ wch: 14 }, { wch: 10 }, { wch: 20 }, { wch: 22 }, { wch: 40 }, { wch: 18 }];
     XLSX.utils.book_append_sheet(wb, ws, 'Observation Logs');
     XLSX.writeFile(wb, 'Observation_Logs_Report.xlsx');
     toast.success('Observation Excel exported!');
@@ -256,10 +255,9 @@ export default function Reports() {
       'Incident Type': r.incidentType || '',
       'Description': r.description || '',
       'Reviewed By': r.reviewedBy || '',
-      'Outcome': r.outcome || '',
       'Comments': r.comments || ''
     })));
-    ws['!cols'] = [14, 22, 16, 20, 14, 14, 22, 40, 18, 16, 30].map(wch => ({ wch }));
+    ws['!cols'] = [14, 22, 16, 20, 14, 14, 22, 40, 18, 30].map(wch => ({ wch }));
     XLSX.utils.book_append_sheet(wb, ws, 'Release Logs');
     XLSX.writeFile(wb, 'Release_Footage_Logs_Report.xlsx');
     toast.success('Release Logs Excel exported!');
@@ -303,8 +301,8 @@ export default function Reports() {
       addHeader('Observation Logs');
       autoTable(doc, {
         startY: 36,
-        head: [['Date', 'Time', 'Location', 'Incident Type', 'Action Taken', 'Details']],
-        body: data.observations.map(o => [o.date || '—', o.time || '—', o.location || '—', o.incidentType || '—', o.actionTaken || '—', (o.details || '').slice(0, 60)]),
+        head: [['Date', 'Time', 'Location', 'Incident Type', 'Details', 'Action Taken']],
+        body: data.observations.map(o => [o.date || '—', o.time || '—', o.location || '—', o.incidentType || '—', (o.details || '').slice(0, 60), o.actionTaken || '—']),
         theme: 'grid',
         headStyles: { fillColor: [139, 92, 246], textColor: 255, fontSize: 8 },
         bodyStyles: { fontSize: 7 },
@@ -333,8 +331,8 @@ export default function Reports() {
       addHeader('Release Footage Logs');
       autoTable(doc, {
         startY: 36,
-        head: [['Release Date', 'Requested By', 'Location', 'Incident Type', 'Description', 'Reviewed By', 'Outcome']],
-        body: data.releases.map(r => [formatDateTime(r.releaseDate), r.requestedBy || r.name || '—', r.location || '—', r.incidentType || '—', (r.description || '').slice(0, 40), r.reviewedBy || '—', r.outcome || '—']),
+        head: [['Release Date', 'Requested By', 'Location', 'Incident Type', 'Description', 'Reviewed By']],
+        body: data.releases.map(r => [formatDateTime(r.releaseDate), r.requestedBy || r.name || '—', r.location || '—', r.incidentType || '—', (r.description || '').slice(0, 40), r.reviewedBy || '—']),
         theme: 'grid',
         headStyles: { fillColor: [16, 185, 129], textColor: 255, fontSize: 8 },
         bodyStyles: { fontSize: 7 },
@@ -392,12 +390,14 @@ export default function Reports() {
       doc.setDrawColor(0, 150, 200);
       doc.setFillColor(15, 30, 45); 
       const pillWidth = 90;
-      doc.roundedRect((pageWidth / 2) - (pillWidth / 2), 22, pillWidth, 6, 3, 3, 'FD');
+      doc.roundedRect((pageWidth / 2) - (pillWidth / 2), 22, pillWidth, 9, 3, 3, 'FD');
       
       // Pill text
       doc.setFontSize(8);
       doc.setTextColor(15, 235, 220); // Cyan
       doc.text('C O M M U N I C A T I O N   C O M M A N D   C E N T R A L', pageWidth / 2, 26, { align: 'center' });
+      doc.setFontSize(6);
+      doc.text('C C T V   U N I T', pageWidth / 2, 29, { align: 'center' });
       
       // Set up Logos container logic
       
@@ -587,9 +587,9 @@ export default function Reports() {
     if (data.observations.length > 0) {
       const ws = XLSX.utils.json_to_sheet(data.observations.map(o => ({
         'Date': o.date || '', 'Time': o.time || '', 'Location': o.location || '',
-        'Incident Type': o.incidentType || '', 'Action Taken': o.actionTaken || '', 'Details': o.details || ''
+        'Incident Type': o.incidentType || '', 'Details': o.details || '', 'Action Taken': o.actionTaken || ''
       })));
-      ws['!cols'] = [14, 10, 20, 22, 18, 40].map(wch => ({ wch }));
+      ws['!cols'] = [14, 10, 20, 22, 40, 18].map(wch => ({ wch }));
       XLSX.utils.book_append_sheet(wb, ws, 'Observations');
     }
 
@@ -611,9 +611,9 @@ export default function Reports() {
         'Phone': r.phoneNumber || '', 'Location': r.location || '', 'Incident Date': r.incidentDate || '',
         'Incident Time': r.incidentTime || '', 'Incident Type': r.incidentType || '',
         'Description': r.description || '', 'Reviewed By': r.reviewedBy || '',
-        'Outcome': r.outcome || '', 'Comments': r.comments || ''
+        'Comments': r.comments || ''
       })));
-      ws['!cols'] = [14, 22, 16, 20, 14, 14, 22, 40, 18, 16, 30].map(wch => ({ wch }));
+      ws['!cols'] = [14, 22, 16, 20, 14, 14, 22, 40, 18, 30].map(wch => ({ wch }));
       XLSX.utils.book_append_sheet(wb, ws, 'Releases');
     }
 
@@ -720,8 +720,8 @@ export default function Reports() {
                       <th>Time</th>
                       <th>Location</th>
                       <th>Incident Type</th>
-                      <th>Action Taken</th>
                       <th>Details</th>
+                      <th>Action Taken</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -731,8 +731,8 @@ export default function Reports() {
                         <td>{obs.time}</td>
                         <td>{obs.location}</td>
                         <td><span className="badge pending">{obs.incidentType}</span></td>
-                        <td><span className="badge reviewed">{obs.actionTaken || '—'}</span></td>
                         <td title={obs.details}>{obs.details?.slice(0, 60)}{obs.details?.length > 60 ? '...' : ''}</td>
+                        <td><span className="badge reviewed">{obs.actionTaken || '—'}</span></td>
                       </tr>
                     ))}
                   </tbody>
@@ -837,7 +837,6 @@ export default function Reports() {
                       <th>Incident Type</th>
                       <th>Description</th>
                       <th>Reviewed By</th>
-                      <th>Outcome</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -853,7 +852,6 @@ export default function Reports() {
                         <td><span className="badge released">{rel.incidentType}</span></td>
                         <td title={rel.description}>{rel.description?.slice(0, 50)}{rel.description?.length > 50 ? '...' : ''}</td>
                         <td>{rel.reviewedBy || '—'}</td>
-                        <td>{rel.outcome || '—'}</td>
                       </tr>
                     ))}
                   </tbody>

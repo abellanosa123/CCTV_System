@@ -160,11 +160,11 @@ export default function Dashboard() {
 
       {/* Charts */}
       <div className="charts-grid">
-        {/* Incident Distribution from Release Footage - Pie Chart */}
+        {/* Incident Distribution from Review Outcomes - Pie Chart */}
         <div className="chart-card">
           <div className="chart-card-header">
             <span className="chart-card-title">Incident Distribution</span>
-            <span style={{ fontSize: '11px', color: '#6b5b8a' }}>Based on Release Footage</span>
+            <span style={{ fontSize: '11px', color: '#6b5b8a' }}>Based on Review Outcome</span>
           </div>
           {incidentData.length > 0 ? (
             <ResponsiveContainer width="100%" height={280}>
@@ -189,7 +189,7 @@ export default function Dashboard() {
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <div className="empty-state"><p>No release footage data available</p></div>
+            <div className="empty-state"><p>No review outcome data available</p></div>
           )}
         </div>
 

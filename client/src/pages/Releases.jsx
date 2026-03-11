@@ -103,7 +103,6 @@ export default function Releases() {
                 <th>Incident Type</th>
                 <th>Description</th>
                 <th>Reviewed By</th>
-                <th>Outcome</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -127,7 +126,6 @@ export default function Releases() {
                   <td><span className="badge released">{rel.incidentType}</span></td>
                   <td title={rel.description}>{rel.description}</td>
                   <td>{rel.reviewedBy || '—'}</td>
-                  <td>{rel.outcome || '—'}</td>
                   <td>
                     <div className="table-actions">
                       <button className="action-btn delete" onClick={() => handleDeleteClick(rel._id)} title="Delete">

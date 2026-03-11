@@ -251,6 +251,11 @@ export default function ObservationModal({ isOpen, onClose, onSubmit, editData }
                 )}
               </div>
 
+              <div className="form-group full-width">
+                <label className="form-label">Details / Description *</label>
+                <textarea name="details" className="form-textarea" value={form.details} onChange={handleChange} placeholder="Describe the observed incident..." rows={4} required />
+              </div>
+
               {/* Action Taken Field */}
               <div className="form-group full-width">
                 <label className="form-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -294,11 +299,6 @@ export default function ObservationModal({ isOpen, onClose, onSubmit, editData }
                     ))}
                   </div>
                 )}
-              </div>
-
-              <div className="form-group full-width">
-                <label className="form-label">Details / Description *</label>
-                <textarea name="details" className="form-textarea" value={form.details} onChange={handleChange} placeholder="Describe the observed incident..." rows={4} required />
               </div>
             </div>
           </div>

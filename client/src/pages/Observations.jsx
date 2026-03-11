@@ -119,8 +119,8 @@ export default function Observations() {
                 <th>Time</th>
                 <th>Location</th>
                 <th>Incident Type</th>
-                <th>Action Taken</th>
                 <th>Details</th>
+                <th>Action Taken</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -131,8 +131,8 @@ export default function Observations() {
                   <td>{obs.time}</td>
                   <td>{obs.location}</td>
                   <td><span className="badge pending">{obs.incidentType}</span></td>
-                  <td><span className="badge reviewed">{obs.actionTaken || '—'}</span></td>
                   <td title={obs.details}>{obs.details}</td>
+                  <td><span className="badge reviewed">{obs.actionTaken || '—'}</span></td>
                   <td>
                     <div className="table-actions">
                       <button className="action-btn edit" onClick={() => handleEdit(obs)} title="Edit">

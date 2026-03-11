@@ -10,10 +10,12 @@ import Releases from './pages/Releases';
 import Reports from './pages/Reports';
 
 function App() {
+  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
+
   return (
     <Router>
-      <div className="app-layout">
-        <Sidebar />
+      <div className={`app-layout ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+        <Sidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
         <main className="main-content">
           <Routes>
             <Route path="/" element={<Dashboard />} />

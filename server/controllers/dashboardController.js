@@ -57,14 +57,14 @@ exports.getDashboardStats = async (req, res) => {
       { $sort: { count: -1 } }
     ]);
 
-    // Incident Distribution from Release Footage
-    const releaseIncidents = await Release.aggregate([
-      { $group: { _id: '$incidentType', count: { $sum: 1 } } },
+    // Incident Distribution based on Review Outcome
+    const reviewOutcomes = await Review.aggregate([
+      { $group: { _id: '$outcome', count: { $sum: 1 } } },
       { $sort: { count: -1 } },
       { $limit: 8 }
     ]);
-    const incidentDistribution = releaseIncidents
-      .filter(item => item._id)
+    const incidentDistribution = reviewOutcomes
+      .filter(item => item._id) // ignore empty outcomes if any
       .map(item => ({ type: item._id, count: item.count }));
 
     // Top Incident Types from Review Logs

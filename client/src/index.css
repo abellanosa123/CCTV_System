@@ -1097,7 +1097,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   pointer-events: none;
 }
 
-/* ── Report Export Section ── */
+/* â”€â”€ Report Export Section â”€â”€ */
 .report-export-section {
   background: linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(168, 85, 247, 0.05) 100%);
   border: 1px solid rgba(139, 92, 246, 0.2);
@@ -1126,7 +1126,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   flex-wrap: wrap;
 }
 
-/* ── Per-Log Report Section ── */
+/* â”€â”€ Per-Log Report Section â”€â”€ */
 .report-log-section {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
@@ -1189,7 +1189,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   color: var(--text-muted);
 }
 
-/* ── Export Buttons ── */
+/* â”€â”€ Export Buttons â”€â”€ */
 .btn-export-pdf {
   display: inline-flex;
   align-items: center;
@@ -1401,4 +1401,41 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   .search-input-wrapper {
     width: 100%;
   }
+}
+
+/* Sidebar Collapsed Styles */
+.sidebar.collapsed {
+  width: var(--sidebar-collapsed);
+}
+
+.sidebar.collapsed .sidebar-header {
+  flex-direction: column;
+  padding: 15px 5px;
+  gap: 15px;
+}
+
+.sidebar.collapsed .sidebar-collapse-btn {
+  position: static !important;
+  margin: 0 auto !important;
+}
+
+.sidebar.collapsed .sidebar-logo {
+  margin-top: 15px;
+}
+
+.sidebar.collapsed .nav-item {
+  justify-content: center;
+  padding: 10px;
+}
+
+.sidebar.collapsed .nav-item svg {
+  margin: 0;
+}
+
+.sidebar.collapsed .sidebar-section-label {
+  display: none;
+}
+
+.app-layout.sidebar-collapsed .main-content {
+  margin-left: var(--sidebar-collapsed);
 }

@@ -153,6 +153,7 @@ export default function Reviews() {
                 <th>Incident Type</th>
                 <th>Status</th>
                 <th>Reviewed By</th>
+                <th>Outcome</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -176,6 +177,7 @@ export default function Reviews() {
                     </span>
                   </td>
                   <td>{rev.reviewedBy || '—'}</td>
+                  <td>{rev.outcome || '—'}</td>
                   <td>
                     <div className="table-actions">
                       <button className="action-btn edit" onClick={() => handleEdit(rev)} title="Edit">
