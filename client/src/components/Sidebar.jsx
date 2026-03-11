@@ -8,7 +8,7 @@ import {
   BarChart3,
   Menu
 } from 'lucide-react';
-import cccLogo from '../assets/ccc-logo.png';
+import cccLogo from '../assets/CCTVUnit_logo.png';
 
 const navItems = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -31,8 +31,8 @@ export default function Sidebar({ collapsed, setCollapsed }) {
             <span>Monitoring System</span>
           </div>
         )}
-        <button 
-          className="btn-icon sidebar-collapse-btn" 
+        <button
+          className="btn-icon sidebar-collapse-btn"
           onClick={() => setCollapsed(!collapsed)}
           style={{ position: 'absolute', right: collapsed ? '0' : '10px', top: '20px', background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', margin: collapsed ? '0 auto' : '0', left: collapsed ? '0' : 'auto' }}
         >

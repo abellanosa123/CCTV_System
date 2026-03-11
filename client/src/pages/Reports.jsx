@@ -7,6 +7,12 @@ import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import cccLogo from '../assets/ccc-logo.png';
 import cdrrmoLogo from '../assets/cdrrmo-logo-transparent.png';
+import malaybalayLogo from '../assets/MalaybalaySeal.png';
+import cctvUnitLogo from '../assets/CCTVUnit_logo_cropped.png';
+import emailIcon from '../assets/mail.png';
+import phoneIcon from '../assets/telephone.png';
+import facebookIcon from '../assets/facebook.png';
+import locationIcon from '../assets/placeholder.png';
 
 export default function Reports() {
   const [startDate, setStartDate] = useState('');
@@ -77,23 +83,222 @@ export default function Reports() {
 
   // ─── PDF EXPORTS ────────────────────────────────────────────────────────────
 
-  const exportObservationsPDF = () => {
-    if (!data || !data.observations.length) return toast.warn('No observation data to export');
-    const doc = new jsPDF({ orientation: 'landscape' });
+  const getLogosB64 = async () => {
+    const loadB64 = async (src) => {
+      try {
+        const res = await fetch(src);
+        const blob = await res.blob();
+        return new Promise(resolve => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.readAsDataURL(blob);
+        });
+      } catch (e) { return null; }
+    };
+    return Promise.all([
+      loadB64(cccLogo), 
+      loadB64(cdrrmoLogo), 
+      loadB64(malaybalayLogo), 
+      loadB64(cctvUnitLogo),
+      loadB64(emailIcon),
+      loadB64(phoneIcon),
+      loadB64(facebookIcon),
+      loadB64(locationIcon)
+    ]);
+  };
+
+  const addSharedLetterHead = async (doc, titleText, subtitleText) => {
+    const [cccB64, cdrrmoB64, malaybalayB64, cctvUnitB64] = await getLogosB64();
     const pageWidth = doc.internal.pageSize.getWidth();
 
-    doc.setFillColor(26, 21, 48);
-    doc.rect(0, 0, pageWidth, 30, 'F');
-    doc.setTextColor(192, 132, 252);
-    doc.setFontSize(16);
+    // Dark purple banner with outer border line style
+    doc.setDrawColor(80, 50, 110);
+    doc.setFillColor(36, 17, 65);
+    doc.roundedRect(8, 6, pageWidth - 16, 26, 2, 2, 'FD');
+
+    // Top subtitle
+    doc.setFontSize(7);
     doc.setFont('helvetica', 'bold');
-    doc.text('CDRRMO CCTV Unit — Observation Logs', pageWidth / 2, 14, { align: 'center' });
+    doc.setTextColor(200, 200, 215);
+    doc.text('C I T Y   G O V E R N M E N T   O F   M A L A Y B A L A Y', pageWidth / 2, 12, { align: 'center' });
+
+    // Main Title
+    doc.setFontSize(16);
+    doc.setTextColor(255, 120, 255); // Vibrant pinkish-purple
+    doc.text('CITY DISASTER RISK REDUCTION & MANAGEMENT OFFICE', pageWidth / 2, 19, { align: 'center' });
+
+    // Pill bg
+    doc.setDrawColor(0, 150, 200);
+    doc.setFillColor(15, 30, 45);
+    const pillWidth = 90;
+    doc.roundedRect((pageWidth / 2) - (pillWidth / 2), 22, pillWidth, 9, 3, 3, 'FD');
+
+    // Pill text
+    doc.setFontSize(8);
+    doc.setTextColor(15, 235, 220); // Cyan
+    doc.text('C O M M U N I C A T I O N   C O M M A N D   C E N T R A L', pageWidth / 2, 26, { align: 'center' });
+    doc.setFontSize(6);
+    doc.text('C C T V   U N I T', pageWidth / 2, 29, { align: 'center' });
+
+    // Logos: Left side CCC, Right side CCTV Unit
+    if (cccB64) {
+      doc.addImage(cccB64, 'PNG', 12, 6, 21, 26);
+    } else {
+      doc.setDrawColor(80, 50, 110); doc.setFillColor(20, 10, 35); doc.circle(22, 19, 10, 'FD');
+    }
+
+    if (cctvUnitB64) {
+      doc.addImage(cctvUnitB64, 'PNG', pageWidth - 32, 8, 22, 22);
+    } else {
+      doc.setDrawColor(80, 50, 110); doc.setFillColor(20, 10, 35); doc.circle(pageWidth - 22, 19, 10, 'FD');
+    }
+
+    // Reset text color to black for the rest of the document
+    doc.setTextColor(0, 0, 0);
+
+    // Title and Subtitle Below Letterhead
+    if (titleText) {
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text(titleText, pageWidth / 2, 42, { align: 'center' });
+    }
+    if (subtitleText) {
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'italic');
+      doc.text(subtitleText, pageWidth / 2, 47, { align: 'center' });
+    }
+  };
+
+  const addReadyToSubmitLetterHead = async (doc, titleText, subtitleText) => {
+    const [cccB64, cdrrmoB64, malaybalayB64, cctvUnitB64, emailB64, phoneB64, facebookB64, locationB64] = await getLogosB64();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    
+    // Logos in the header
+    doc.setTextColor(0, 0, 0);
+    // Left logo: Malaybalay Seal
+    if (malaybalayB64) {
+      doc.addImage(malaybalayB64, 'PNG', 12, 7, 30, 30);
+    }
+    // Right logo: CDRRMO Seal
+    if (cdrrmoB64) {
+      doc.addImage(cdrrmoB64, 'PNG', 43, 7, 30, 30);
+    }
+
+    // Main header text "CDRRMO"
+    // Make CDRRMO extra bold by adding a small stroke around the text
+    doc.setTextColor(70, 75, 80); // dark grayish navy
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(44);
+    doc.setDrawColor(70, 75, 80);
+    doc.setLineWidth(0.4);
+    doc.text('CDRRMO', 75, 23, { renderingMode: 'fillThenStroke' });
+
+    // Reset rendering mode for regular text
+    doc.setTextColor(15, 95, 165); // blue to match bar
+    doc.setFontSize(9.5);
+    doc.setFont('helvetica', 'bold');
+    doc.text('CITY DISASTER RISK REDUCTION', 76, 30, { renderingMode: 'fill' });
+    doc.text('AND MANAGEMENT OFFICE', 76, 34, { renderingMode: 'fill' });
+
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    // Calculate block left position based on the longest string to format it as a left-aligned block on the right edge
+    const maxTextWidth = doc.getTextWidth('CDRRMO Building, Barangay 9, Malaybalay City, Bukidnon');
+    const blockLeftX = pageWidth - 14 - maxTextWidth - 6;
+
+    // Contact Info (aligned as a left-justified block on the right side of the page)
+    const drawContactLine = (y, iconType, text) => {
+        const cx = blockLeftX;
+        const cy = y - 1;
+        
+        // Solid blue circle background
+        doc.setFillColor(31, 102, 178);
+        doc.setDrawColor(31, 102, 178);
+        doc.circle(cx, cy, 2.5, 'F');
+        
+        let iconB64 = null;
+        if (iconType === 'email') iconB64 = emailB64;
+        else if (iconType === 'phone') iconB64 = phoneB64;
+        else if (iconType === 'facebook') iconB64 = facebookB64;
+        else if (iconType === 'location') iconB64 = locationB64;
+
+        if (iconB64) {
+            doc.addImage(iconB64, 'PNG', cx - 1.5, cy - 1.5, 3, 3);
+        }
+
+        // Draw the text
+        doc.setTextColor(50, 60, 70);
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.text(text, cx + 4, y, { align: 'left' });
+    };
+    
+    drawContactLine(13, 'email', 'malaybalaycitydrrmo@gmail.com');
+    drawContactLine(19, 'phone', '(088) 813-3611');
+    drawContactLine(25, 'facebook', 'CDRRMO-Malaybalay');
+    drawContactLine(31, 'location', 'CDRRMO Building, Barangay 9, Malaybalay City, Bukidnon');
+
+    const barY = 41;
+    const barH = 12;
+    const mainBlueW = pageWidth - 70; // Width before slant
+
+    // Main blue bar rectangle
+    doc.setFillColor(15, 95, 165); // Matching vivid blue
+    doc.rect(0, barY, mainBlueW, barH, 'F');
+    // Slanted right-edge effect (top corner sticks out further right)
+    doc.triangle(mainBlueW, barY, mainBlueW + 15, barY, mainBlueW, barY + barH, 'F');
+
+    // Gap, then dark slate/grey slanted block
+    doc.setFillColor(35, 50, 65);
+    const darkStartX = mainBlueW + 3; // 3px gap to match the photo
+    
+    // Draw the slanted left edge of the dark block
+    // Point 1: Bottom-Left (darkStartX, barY+barH)
+    // Point 2: Top-Left (darkStartX+15, barY)
+    // Point 3: Bottom-Right to square it out before the rect: (darkStartX+15, barY+barH)
+    doc.triangle(darkStartX, barY + barH, darkStartX + 15, barY, darkStartX + 15, barY + barH, 'F');
+    
+    // Fill the rest of the dark block to the right edge of the page
+    doc.rect(darkStartX + 15, barY, pageWidth, barH, 'F');
+
+    // Text inside blue bar
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(26);
+    doc.text('CCC', 14, barY + 9);
+
     doc.setFontSize(9);
-    doc.setTextColor(167, 139, 204);
-    doc.text(`Period: ${periodLabel()}   |   Generated: ${new Date().toLocaleString()}`, pageWidth / 2, 22, { align: 'center' });
+    doc.setFont('helvetica', 'normal');
+    // It's all caps but slightly smaller for SECTION
+    doc.text('COMMUNICATION COMMAND CENTRAL', 38, barY + 5);
+    doc.setFontSize(7);
+    doc.text('SECTION', 38, barY + 10);
+
+    // Reset color to pure black text
+    doc.setTextColor(0, 0, 0);
+
+    // Document Title and Subtitle Below Letterhead
+    if (titleText) {
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text(titleText, pageWidth / 2, barY + 22, { align: 'center' });
+    }
+    if (subtitleText) {
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'italic');
+        doc.text(subtitleText, pageWidth / 2, barY + 28, { align: 'center' });
+    }
+  };
+
+  const exportObservationsPDF = async () => {
+    if (!data || !data.observations.length) return toast.warn('No observation data to export');
+    const doc = new jsPDF({ orientation: 'landscape' });
+
+    await addSharedLetterHead(doc, 'OBSERVATION LOGS', `Period: ${periodLabel()}   |   Generated: ${new Date().toLocaleString()}`);
 
     autoTable(doc, {
-      startY: 36,
+      startY: 55,
       head: [['Date', 'Time', 'Location', 'Incident Type', 'Details', 'Action Taken']],
       body: data.observations.map(o => [
         o.date || '—',
@@ -105,7 +310,7 @@ export default function Reports() {
       ]),
       theme: 'grid',
       headStyles: { fillColor: [139, 92, 246], textColor: 255, fontStyle: 'bold', fontSize: 9 },
-      bodyStyles: { fontSize: 8, textColor: [30, 20, 50] },
+      bodyStyles: { fontSize: 8, textColor: 30 },
       alternateRowStyles: { fillColor: [240, 235, 255] },
       styles: { cellPadding: 3 }
     });
@@ -114,23 +319,14 @@ export default function Reports() {
     toast.success('Observation PDF exported!');
   };
 
-  const exportReviewsPDF = () => {
+  const exportReviewsPDF = async () => {
     if (!data || !data.reviews.length) return toast.warn('No review data to export');
     const doc = new jsPDF({ orientation: 'landscape' });
-    const pageWidth = doc.internal.pageSize.getWidth();
 
-    doc.setFillColor(26, 21, 48);
-    doc.rect(0, 0, pageWidth, 30, 'F');
-    doc.setTextColor(192, 132, 252);
-    doc.setFontSize(16);
-    doc.setFont('helvetica', 'bold');
-    doc.text('CDRRMO CCTV Unit — Review Logs', pageWidth / 2, 14, { align: 'center' });
-    doc.setFontSize(9);
-    doc.setTextColor(167, 139, 204);
-    doc.text(`Period: ${periodLabel()}   |   Generated: ${new Date().toLocaleString()}`, pageWidth / 2, 22, { align: 'center' });
+    await addSharedLetterHead(doc, 'REVIEW LOGS', `Period: ${periodLabel()}   |   Generated: ${new Date().toLocaleString()}`);
 
     autoTable(doc, {
-      startY: 36,
+      startY: 55,
       head: [['Date Requested', 'Time', 'Requestor', 'Phone', 'Location', 'Incident Date', 'Incident Time', 'Incident Type', 'Description', 'Status', 'Reviewed By', 'Outcome', 'Comments']],
       body: data.reviews.map(r => [
         r.dateRequested || '—',
@@ -149,7 +345,7 @@ export default function Reports() {
       ]),
       theme: 'grid',
       headStyles: { fillColor: [139, 92, 246], textColor: 255, fontStyle: 'bold', fontSize: 7 },
-      bodyStyles: { fontSize: 7, textColor: [30, 20, 50] },
+      bodyStyles: { fontSize: 7, textColor: 30 },
       alternateRowStyles: { fillColor: [240, 235, 255] },
       styles: { cellPadding: 2 }
     });
@@ -158,23 +354,14 @@ export default function Reports() {
     toast.success('Review Logs PDF exported!');
   };
 
-  const exportReleasesPDF = () => {
+  const exportReleasesPDF = async () => {
     if (!data || !data.releases.length) return toast.warn('No release data to export');
     const doc = new jsPDF({ orientation: 'landscape' });
-    const pageWidth = doc.internal.pageSize.getWidth();
 
-    doc.setFillColor(26, 21, 48);
-    doc.rect(0, 0, pageWidth, 30, 'F');
-    doc.setTextColor(192, 132, 252);
-    doc.setFontSize(16);
-    doc.setFont('helvetica', 'bold');
-    doc.text('CDRRMO CCTV Unit — Release Footage Logs', pageWidth / 2, 14, { align: 'center' });
-    doc.setFontSize(9);
-    doc.setTextColor(167, 139, 204);
-    doc.text(`Period: ${periodLabel()}   |   Generated: ${new Date().toLocaleString()}`, pageWidth / 2, 22, { align: 'center' });
+    await addSharedLetterHead(doc, 'RELEASE FOOTAGE LOGS', `Period: ${periodLabel()}   |   Generated: ${new Date().toLocaleString()}`);
 
     autoTable(doc, {
-      startY: 36,
+      startY: 55,
       head: [['Release Date', 'Requested By', 'Phone', 'Location', 'Incident Date', 'Incident Time', 'Incident Type', 'Description', 'Reviewed By', 'Comments']],
       body: data.releases.map(r => [
         formatDateTime(r.releaseDate),
@@ -190,7 +377,7 @@ export default function Reports() {
       ]),
       theme: 'grid',
       headStyles: { fillColor: [16, 185, 129], textColor: 255, fontStyle: 'bold', fontSize: 7 },
-      bodyStyles: { fontSize: 7, textColor: [30, 20, 50] },
+      bodyStyles: { fontSize: 7, textColor: 30 },
       alternateRowStyles: { fillColor: [230, 255, 245] },
       styles: { cellPadding: 2 }
     });
@@ -265,47 +452,35 @@ export default function Reports() {
 
   // ─── FULL COMBINED EXPORTS ───────────────────────────────────────────────────
 
-  const exportAllPDF = () => {
+  const exportAllPDF = async () => {
     if (!data) return;
     const doc = new jsPDF({ orientation: 'landscape' });
-    const pageWidth = doc.internal.pageSize.getWidth();
-
-    const addHeader = (title) => {
-      doc.setFillColor(26, 21, 48);
-      doc.rect(0, 0, pageWidth, 30, 'F');
-      doc.setTextColor(192, 132, 252);
-      doc.setFontSize(15);
-      doc.setFont('helvetica', 'bold');
-      doc.text(`CDRRMO CCTV Unit — ${title}`, pageWidth / 2, 14, { align: 'center' });
-      doc.setFontSize(9);
-      doc.setTextColor(167, 139, 204);
-      doc.text(`Period: ${periodLabel()}   |   Generated: ${new Date().toLocaleString()}`, pageWidth / 2, 22, { align: 'center' });
-    };
 
     // Summary page
-    addHeader('Complete Report');
+    await addSharedLetterHead(doc, 'COMPLETE REPORT SUMMARY', `Period: ${periodLabel()}   |   Generated: ${new Date().toLocaleString()}`);
+
     doc.setTextColor(30, 20, 50);
     doc.setFontSize(13);
     doc.setFont('helvetica', 'bold');
-    doc.text('Summary', 14, 44);
+    doc.text('Summary Overview', 14, 60);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(11);
-    doc.text(`Total Observations: ${data.summary.totalObservations}`, 14, 54);
-    doc.text(`Total Reviews: ${data.summary.totalReviews}`, 14, 62);
-    doc.text(`Total Releases: ${data.summary.totalReleases}`, 14, 70);
-    doc.text(`Total Records: ${data.summary.totalRecords}`, 14, 78);
+    doc.text(`Total Observations: ${data.summary.totalObservations}`, 14, 70);
+    doc.text(`Total Reviews: ${data.summary.totalReviews}`, 14, 78);
+    doc.text(`Total Releases: ${data.summary.totalReleases}`, 14, 86);
+    doc.text(`Total Records: ${data.summary.totalRecords}`, 14, 94);
 
     // Observations
     if (data.observations.length > 0) {
       doc.addPage();
-      addHeader('Observation Logs');
+      await addSharedLetterHead(doc, 'OBSERVATION LOGS', `Period: ${periodLabel()}   |   Generated: ${new Date().toLocaleString()}`);
       autoTable(doc, {
-        startY: 36,
+        startY: 55,
         head: [['Date', 'Time', 'Location', 'Incident Type', 'Details', 'Action Taken']],
         body: data.observations.map(o => [o.date || '—', o.time || '—', o.location || '—', o.incidentType || '—', (o.details || '').slice(0, 60), o.actionTaken || '—']),
         theme: 'grid',
         headStyles: { fillColor: [139, 92, 246], textColor: 255, fontSize: 8 },
-        bodyStyles: { fontSize: 7 },
+        bodyStyles: { fontSize: 7, textColor: 30 },
         alternateRowStyles: { fillColor: [240, 235, 255] }
       });
     }
@@ -313,14 +488,14 @@ export default function Reports() {
     // Reviews
     if (data.reviews.length > 0) {
       doc.addPage();
-      addHeader('Review Logs');
+      await addSharedLetterHead(doc, 'REVIEW LOGS', `Period: ${periodLabel()}   |   Generated: ${new Date().toLocaleString()}`);
       autoTable(doc, {
-        startY: 36,
+        startY: 55,
         head: [['Date', 'Requestor', 'Location', 'Incident Date', 'Incident Type', 'Status', 'Reviewed By', 'Outcome']],
         body: data.reviews.map(r => [r.dateRequested || '—', r.name || '—', r.location || '—', r.incidentDate || '—', r.incidentType || '—', r.status === 'Pending' ? 'Not Released' : (r.status || 'Not Released'), r.reviewedBy || '—', r.outcome || '—']),
         theme: 'grid',
         headStyles: { fillColor: [139, 92, 246], textColor: 255, fontSize: 8 },
-        bodyStyles: { fontSize: 7 },
+        bodyStyles: { fontSize: 7, textColor: 30 },
         alternateRowStyles: { fillColor: [240, 235, 255] }
       });
     }
@@ -328,14 +503,14 @@ export default function Reports() {
     // Releases
     if (data.releases.length > 0) {
       doc.addPage();
-      addHeader('Release Footage Logs');
+      await addSharedLetterHead(doc, 'RELEASE FOOTAGE LOGS', `Period: ${periodLabel()}   |   Generated: ${new Date().toLocaleString()}`);
       autoTable(doc, {
-        startY: 36,
+        startY: 55,
         head: [['Release Date', 'Requested By', 'Location', 'Incident Type', 'Description', 'Reviewed By']],
         body: data.releases.map(r => [formatDateTime(r.releaseDate), r.requestedBy || r.name || '—', r.location || '—', r.incidentType || '—', (r.description || '').slice(0, 40), r.reviewedBy || '—']),
         theme: 'grid',
         headStyles: { fillColor: [16, 185, 129], textColor: 255, fontSize: 8 },
-        bodyStyles: { fontSize: 7 },
+        bodyStyles: { fontSize: 7, textColor: 30 },
         alternateRowStyles: { fillColor: [230, 255, 245] }
       });
     }
@@ -346,87 +521,17 @@ export default function Reports() {
 
   const exportReadyToSubmitPDF = async () => {
     if (!data) return toast.warn('No data to export');
-    
-    const loadB64 = async (src) => {
-      try {
-        const res = await fetch(src);
-        const blob = await res.blob();
-        return new Promise(resolve => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result);
-          reader.readAsDataURL(blob);
-        });
-      } catch (e) { return null; }
-    };
-    
-    const [cccB64, cdrrmoB64] = await Promise.all([loadB64(cccLogo), loadB64(cdrrmoLogo)]);
 
     const doc = new jsPDF({ orientation: 'landscape' });
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
-    
-    const monthYear = startDate && endDate 
+
+    const monthYear = startDate && endDate
       ? `${new Date(startDate).toLocaleString('default', { month: 'long', year: 'numeric' })}`
       : 'the selected period';
 
-    const addLetterHead = () => {
-      // Dark purple banner with outer border line style
-      doc.setDrawColor(80, 50, 110);
-      doc.setFillColor(36, 17, 65);
-      doc.roundedRect(8, 6, pageWidth - 16, 26, 2, 2, 'FD');
-      
-      // Top subtitle
-      doc.setFontSize(7);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(200, 200, 215);
-      doc.text('C I T Y   G O V E R N M E N T   O F   M A L A Y B A L A Y', pageWidth / 2, 12, { align: 'center' });
-      
-      // Main Title
-      doc.setFontSize(16);
-      doc.setTextColor(255, 120, 255); // Vibrant pinkish-purple
-      doc.text('CITY DISASTER RISK REDUCTION & MANAGEMENT OFFICE', pageWidth / 2, 19, { align: 'center' });
-      
-      // Pill bg
-      doc.setDrawColor(0, 150, 200);
-      doc.setFillColor(15, 30, 45); 
-      const pillWidth = 90;
-      doc.roundedRect((pageWidth / 2) - (pillWidth / 2), 22, pillWidth, 9, 3, 3, 'FD');
-      
-      // Pill text
-      doc.setFontSize(8);
-      doc.setTextColor(15, 235, 220); // Cyan
-      doc.text('C O M M U N I C A T I O N   C O M M A N D   C E N T R A L', pageWidth / 2, 26, { align: 'center' });
-      doc.setFontSize(6);
-      doc.text('C C T V   U N I T', pageWidth / 2, 29, { align: 'center' });
-      
-      // Set up Logos container logic
-      
-      // Dynamically load images or use placeholders
-      if (cdrrmoB64) {
-        doc.addImage(cdrrmoB64, 'PNG', 12, 8, 22, 22);
-      } else {
-        doc.setDrawColor(80, 50, 110); doc.setFillColor(20, 10, 35); doc.circle(22, 19, 10, 'FD'); 
-      }
-      
-      if (cccB64) {
-        doc.addImage(cccB64, 'PNG', pageWidth - 32, 6, 21, 26);
-      } else {
-        doc.setDrawColor(80, 50, 110); doc.setFillColor(20, 10, 35); doc.circle(pageWidth - 22, 19, 10, 'FD');
-      }
-      
-      // Reset text color to black for the rest of the document
-      doc.setTextColor(0, 0, 0);
-    };
-
     // First Page
-    addLetterHead();
-    
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text(`FOOTAGE REVIEW PER REQUEST`, pageWidth / 2, 42, { align: 'center' });
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'italic');
-    doc.text(`For the month of ${monthYear}`, pageWidth / 2, 47, { align: 'center' });
+    await addReadyToSubmitLetterHead(doc, 'FOOTAGE REVIEW PER REQUEST', `For the month of ${monthYear}`);
 
     const reviewBody = data.reviews.map((r, i) => [
       i + 1,
@@ -440,7 +545,7 @@ export default function Reports() {
     ]);
 
     autoTable(doc, {
-      startY: 55,
+      startY: 80,
       head: [
         [
           { content: '#', rowSpan: 2, styles: { halign: 'center', valign: 'middle' } },
@@ -462,19 +567,12 @@ export default function Reports() {
       headStyles: { fillColor: [220, 220, 220], textColor: 0, fontStyle: 'bold', fontSize: 8, lineColor: [0, 0, 0], lineWidth: 0.1 },
       bodyStyles: { fontSize: 8, textColor: 0, lineColor: [0, 0, 0], lineWidth: 0.1 },
       styles: { cellPadding: 2, font: 'helvetica' },
-      columnStyles: { 0: { cellWidth: 10, halign: 'center' }, 2: { cellWidth: 20 }, 3: { cellWidth: 15 }, 6: { cellWidth: 15, halign: 'center' }, 7: { cellWidth: 15, halign: 'center' } }
+      columnStyles: { 0: { cellWidth: 10, halign: 'center' }, 2: { cellWidth: 20 }, 3: { cellWidth: 15 }, 6: { cellWidth: 22, halign: 'center' }, 7: { cellWidth: 22, halign: 'center' } }
     });
 
     // Second Page
     doc.addPage();
-    addLetterHead();
-
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text(`VIDEO FOOTAGE RELEASED`, pageWidth / 2, 42, { align: 'center' });
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'italic');
-    doc.text(`For the month of ${monthYear}`, pageWidth / 2, 47, { align: 'center' });
+    await addReadyToSubmitLetterHead(doc, 'VIDEO FOOTAGE RELEASED', `For the month of ${monthYear}`);
 
     const releaseBody = data.releases.map(r => [
       r.requestedBy || r.name || '—',
@@ -484,7 +582,7 @@ export default function Reports() {
     ]);
 
     autoTable(doc, {
-      startY: 55,
+      startY: 80,
       head: [
         [
           { content: 'Requesting Party', rowSpan: 2, styles: { halign: 'center', valign: 'middle' } },
@@ -503,9 +601,9 @@ export default function Reports() {
       styles: { cellPadding: 2, font: 'helvetica' },
       columnStyles: { 1: { cellWidth: 25 }, 2: { cellWidth: 20 } }
     });
-    
+
     let currentY = doc.lastAutoTable.finalY + 15;
-    
+
     // Top Incidents and Locations
     const incidents = {};
     const locations = {};
@@ -513,8 +611,8 @@ export default function Reports() {
       if (r.incidentType) incidents[r.incidentType] = (incidents[r.incidentType] || 0) + 1;
       if (r.location) locations[r.location] = (locations[r.location] || 0) + 1;
     });
-    const sortedIncidents = Object.entries(incidents).sort((a,b) => b[1]-a[1]).slice(0,9);
-    const sortedLocations = Object.entries(locations).sort((a,b) => b[1]-a[1]).slice(0,11);
+    const sortedIncidents = Object.entries(incidents).sort((a, b) => b[1] - a[1]).slice(0, 9);
+    const sortedLocations = Object.entries(locations).sort((a, b) => b[1] - a[1]).slice(0, 11);
 
     if (currentY > pageHeight - 80) { doc.addPage(); currentY = 20; }
 
@@ -522,7 +620,7 @@ export default function Reports() {
     doc.setFont('helvetica', 'bold');
     doc.text('TOP INCIDENT', 14, currentY);
     doc.text('TOP LOCATION', 80, currentY);
-    
+
     doc.setFont('helvetica', 'normal');
     sortedIncidents.forEach((item, idx) => {
       doc.text(`${item[1]} ${item[0]}`, 14, currentY + 6 + (idx * 5));
@@ -540,27 +638,27 @@ export default function Reports() {
     // Signatories
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    
+
     const cw = (pageWidth - 28) / 4;
     doc.text('Prepared by:', 14, currentY);
     doc.text('Checked by:', 14 + cw, currentY);
-    doc.text('Noted:', 14 + cw*2, currentY);
-    doc.text('Approved:', 14 + cw*3, currentY);
+    doc.text('Noted:', 14 + cw * 2, currentY);
+    doc.text('Approved:', 14 + cw * 3, currentY);
 
     currentY += 15;
 
     doc.setFont('helvetica', 'bold');
     doc.text(signatories.preparedBy.name, 14, currentY);
     doc.text(signatories.checkedBy.name, 14 + cw, currentY);
-    doc.text(signatories.noted.name, 14 + cw*2, currentY);
-    doc.text(signatories.approved.name, 14 + cw*3, currentY);
+    doc.text(signatories.noted.name, 14 + cw * 2, currentY);
+    doc.text(signatories.approved.name, 14 + cw * 3, currentY);
 
     currentY += 5;
     doc.setFont('helvetica', 'normal');
     doc.text(signatories.preparedBy.title, 14, currentY);
     doc.text(signatories.checkedBy.title, 14 + cw, currentY);
-    doc.text(signatories.noted.title, 14 + cw*2, currentY);
-    doc.text(signatories.approved.title, 14 + cw*3, currentY);
+    doc.text(signatories.noted.title, 14 + cw * 2, currentY);
+    doc.text(signatories.approved.title, 14 + cw * 3, currentY);
 
     doc.save('Ready_To_Submit_Report.pdf');
     toast.success('Ready-to-Submit PDF exported!');
@@ -880,18 +978,18 @@ export default function Reports() {
                   </h4>
                   <div className="form-group" style={{ marginBottom: '10px' }}>
                     <label className="form-label" style={{ fontSize: '11px' }}>Name</label>
-                    <input 
-                      className="form-input" 
+                    <input
+                      className="form-input"
                       value={signatories[key].name}
-                      onChange={e => setSignatories({...signatories, [key]: {...signatories[key], name: e.target.value}})}
+                      onChange={e => setSignatories({ ...signatories, [key]: { ...signatories[key], name: e.target.value } })}
                     />
                   </div>
                   <div className="form-group">
                     <label className="form-label" style={{ fontSize: '11px' }}>Title/Position</label>
-                    <input 
-                      className="form-input" 
+                    <input
+                      className="form-input"
                       value={signatories[key].title}
-                      onChange={e => setSignatories({...signatories, [key]: {...signatories[key], title: e.target.value}})}
+                      onChange={e => setSignatories({ ...signatories, [key]: { ...signatories[key], title: e.target.value } })}
                     />
                   </div>
                 </div>

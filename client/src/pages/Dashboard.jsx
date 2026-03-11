@@ -196,7 +196,7 @@ export default function Dashboard() {
         {/* Logs Overview — Action Taken from Observations - Bar Chart */}
         <div className="chart-card">
           <div className="chart-card-header">
-            <span className="chart-card-title">Observation Actions Overview</span>
+            <span className="chart-card-title">Observation Actions Taken</span>
             <span style={{ fontSize: '11px', color: '#6b5b8a' }}>Based on Observation Logs</span>
           </div>
           {actionTakenData.length > 0 ? (
