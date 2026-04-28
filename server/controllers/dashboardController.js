@@ -1,97 +1,174 @@
-const Observation = require('../models/Observation');
-const Review = require('../models/Review');
-const Release = require('../models/Release');
+const fileDb = require('../storage/fileDb');
+
+const groupCount = (rows, field) => {
+  const map = new Map();
+  rows.forEach((r) => {
+    const key = r?.[field];
+    if (!key) return;
+    map.set(key, (map.get(key) || 0) + 1);
+  });
+  return Array.from(map.entries()).map(([key, count]) => ({ _id: key, count }));
+};
 
 // Get dashboard statistics
 exports.getDashboardStats = async (req, res) => {
   try {
-    const { filter = 'monthly' } = req.query;
+    const { filter = 'monthly', date, month, year } = req.query;
 
     const now = new Date();
-    let dateFilter = {};
-    let prevDateFilter = {};
+    let currentPrefix = '';
+    let prevPrefix = '';
 
     if (filter === 'daily') {
-      const today = now.toISOString().split('T')[0];
-      const yesterday = new Date(now);
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayStr = yesterday.toISOString().split('T')[0];
-      dateFilter = { $regex: `^${today}` };
-      prevDateFilter = { $regex: `^${yesterdayStr}` };
+      currentPrefix = date || now.toISOString().split('T')[0];
+      const prev = new Date(currentPrefix);
+      prev.setDate(prev.getDate() - 1);
+      prevPrefix = prev.toISOString().split('T')[0];
     } else if (filter === 'monthly') {
-      const monthStr = now.toISOString().slice(0, 7);
-      const prevMonth = new Date(now);
-      prevMonth.setMonth(prevMonth.getMonth() - 1);
-      const prevMonthStr = prevMonth.toISOString().slice(0, 7);
-      dateFilter = { $regex: `^${monthStr}` };
-      prevDateFilter = { $regex: `^${prevMonthStr}` };
+      currentPrefix = month || now.toISOString().slice(0, 7); // YYYY-MM
+      const [y, m] = currentPrefix.split('-').map(Number);
+      const prev = new Date(y, m - 2, 1);
+      prevPrefix = prev.getFullYear() + '-' + String(prev.getMonth() + 1).padStart(2, '0');
     } else if (filter === 'yearly') {
-      const yearStr = now.getFullYear().toString();
-      const prevYearStr = (now.getFullYear() - 1).toString();
-      dateFilter = { $regex: `^${yearStr}` };
-      prevDateFilter = { $regex: `^${prevYearStr}` };
+      currentPrefix = year || now.getFullYear().toString();
+      prevPrefix = (parseInt(currentPrefix) - 1).toString();
     }
 
+    const prefixRegex = (prefix) => (prefix ? new RegExp(`^${prefix}`) : null);
+    const currentRe = prefixRegex(currentPrefix);
+    const prevRe = prefixRegex(prevPrefix);
+    
+    const matches = (val, re) => {
+      if (filter === 'all') return true;
+      if (!re) return true;
+      return re.test(String(val || ''));
+    };
+
+    const observationsAll = fileDb.readCollection('observations');
+    const reviewsAll = fileDb.readCollection('reviews');
+    const releasesAll = fileDb.readCollection('releases');
+
+    // All users can see all dashboard data (no filtering by userId)
+
+    // Filter collections by current period for charts
+    const observationsFiltered = observationsAll.filter(o => matches(o?.date, currentRe));
+    const reviewsFiltered = reviewsAll.filter(r => matches(r?.dateRequested, currentRe));
+    const releasesFiltered = releasesAll.filter(r => matches(r?.releaseDate, currentRe));
+
     // Current period counts
-    const [totalObservations, totalReviews, totalReleases] = await Promise.all([
-      Observation.countDocuments(filter !== 'all' ? { date: dateFilter } : {}),
-      Review.countDocuments(filter !== 'all' ? { dateRequested: dateFilter } : {}),
-      Release.countDocuments(filter !== 'all' ? { releaseDate: dateFilter } : {})
-    ]);
+    const totalObservations = observationsFiltered.length;
+    const totalReviews = reviewsFiltered.length;
+    const totalReleases = releasesFiltered.length;
 
     // Previous period counts for percentage change
-    const [prevObservations, prevReviews, prevReleases] = await Promise.all([
-      Observation.countDocuments(filter !== 'all' ? { date: prevDateFilter } : {}),
-      Review.countDocuments(filter !== 'all' ? { dateRequested: prevDateFilter } : {}),
-      Release.countDocuments(filter !== 'all' ? { releaseDate: prevDateFilter } : {})
-    ]);
+    const prevObservations = observationsAll.filter(o => matches(o?.date, prevRe)).length;
+    const prevReviews = reviewsAll.filter(r => matches(r?.dateRequested, prevRe)).length;
+    const prevReleases = releasesAll.filter(r => matches(r?.releaseDate, prevRe)).length;
 
     const calcChange = (current, previous) => {
       if (previous === 0) return current > 0 ? 100 : 0;
       return Math.round(((current - previous) / previous) * 100);
     };
 
-    // Action Taken distribution from Observations (for Logs Overview chart)
-    const actionTakenData = await Observation.aggregate([
-      { $group: { _id: '$actionTaken', count: { $sum: 1 } } },
-      { $sort: { count: -1 } }
-    ]);
+    // --- CHARTS DATA (Filtered) ---
 
-    // Incident Distribution based on Review Outcome
-    const reviewOutcomes = await Review.aggregate([
-      { $group: { _id: '$outcome', count: { $sum: 1 } } },
-      { $sort: { count: -1 } },
-      { $limit: 8 }
-    ]);
-    const incidentDistribution = reviewOutcomes
-      .filter(item => item._id) // ignore empty outcomes if any
-      .map(item => ({ type: item._id, count: item.count }));
+    // Observation Incident Types with Location breakdown
+    const obsIncidentDist = Array.from(
+      observationsFiltered.reduce((acc, o) => {
+        if (!o.incidentType) return acc;
+        if (!acc.has(o.incidentType)) acc.set(o.incidentType, { type: o.incidentType, count: 0, breakdown: {} });
+        const entry = acc.get(o.incidentType);
+        entry.count++;
+        if (o.location) {
+          entry.breakdown[o.location] = (entry.breakdown[o.location] || 0) + 1;
+        }
+        return acc;
+      }, new Map()).values()
+    )
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
 
-    // Top Incident Types from Review Logs
-    const reviewIncidentTypes = await Review.aggregate([
-      { $group: { _id: '$incidentType', count: { $sum: 1 } } },
-      { $sort: { count: -1 } },
-      { $limit: 8 }
-    ]);
-    const topIncidentTypes = reviewIncidentTypes
-      .filter(item => item._id)
-      .map(item => ({ type: item._id, count: item.count }));
-
-    // Top locations (from Review logs as requested)
-    const revLocations = await Review.aggregate([
-      { $group: { _id: '$location', count: { $sum: 1 } } },
-      { $sort: { count: -1 } }
-    ]);
-
-    const topLocations = revLocations
-      .filter(item => item._id)
-      .map(item => ({ location: item._id, count: item.count }))
+    // Review Outcomes with Incident Type breakdown
+    const reviewOutcomes = Array.from(
+      reviewsFiltered.reduce((acc, r) => {
+        if (!r.outcome) return acc;
+        if (!acc.has(r.outcome)) acc.set(r.outcome, { type: r.outcome, count: 0, breakdown: {} });
+        const entry = acc.get(r.outcome);
+        entry.count++;
+        if (r.incidentType) {
+          entry.breakdown[r.incidentType] = (entry.breakdown[r.incidentType] || 0) + 1;
+        }
+        return acc;
+      }, new Map()).values()
+    )
+      .sort((a, b) => b.count - a.count)
       .slice(0, 8);
 
-    // Action taken overview for bar chart
-    const actionTakenOverview = actionTakenData
-      .filter(item => item._id)
-      .map(item => ({ action: item._id, count: item.count }));
+    // Review Incident Types with Barangay breakdown
+    const reviewIncidentTypes = Array.from(
+      reviewsFiltered.reduce((acc, r) => {
+        if (!r.incidentType) return acc;
+        if (!acc.has(r.incidentType)) acc.set(r.incidentType, { type: r.incidentType, count: 0, breakdown: {} });
+        const entry = acc.get(r.incidentType);
+        entry.count++;
+        const loc = r.barangay || r.location;
+        if (loc) {
+          entry.breakdown[loc] = (entry.breakdown[loc] || 0) + 1;
+        }
+        return acc;
+      }, new Map()).values()
+    )
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 8);
+
+    // Top locations from filtered Review logs with Purok breakdown
+    const topLocations = Array.from(
+      reviewsFiltered.reduce((acc, r) => {
+        const loc = r.barangay || r.location;
+        if (!loc) return acc;
+        if (!acc.has(loc)) acc.set(loc, { location: loc, count: 0, breakdown: {} });
+        const entry = acc.get(loc);
+        entry.count++;
+        if (r.purok) {
+          entry.breakdown[r.purok] = (entry.breakdown[r.purok] || 0) + 1;
+        } else {
+          entry.breakdown['(No Purok)'] = (entry.breakdown['(No Purok)'] || 0) + 1;
+        }
+        return acc;
+      }, new Map()).values()
+    )
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 8);
+
+    // Action taken overview from filtered observations with Incident Type breakdown
+    const actionTakenOverview = Array.from(
+      observationsFiltered.reduce((acc, o) => {
+        if (!o.actionTaken) return acc;
+        if (!acc.has(o.actionTaken)) acc.set(o.actionTaken, { action: o.actionTaken, count: 0, breakdown: {} });
+        const entry = acc.get(o.actionTaken);
+        entry.count++;
+        if (o.incidentType) {
+          entry.breakdown[o.incidentType] = (entry.breakdown[o.incidentType] || 0) + 1;
+        }
+        return acc;
+      }, new Map()).values()
+    )
+      .sort((a, b) => b.count - a.count);
+
+    // Multi-Agency response from filtered observations with Incident Type breakdown
+    const multiAgencyResponse = Array.from(
+      observationsFiltered.reduce((acc, o) => {
+        if (!o.dispatchTo) return acc;
+        if (!acc.has(o.dispatchTo)) acc.set(o.dispatchTo, { agency: o.dispatchTo, count: 0, breakdown: {} });
+        const entry = acc.get(o.dispatchTo);
+        entry.count++;
+        if (o.incidentType) {
+          entry.breakdown[o.incidentType] = (entry.breakdown[o.incidentType] || 0) + 1;
+        }
+        return acc;
+      }, new Map()).values()
+    )
+      .sort((a, b) => b.count - a.count);
 
     res.json({
       stats: {
@@ -102,10 +179,12 @@ exports.getDashboardStats = async (req, res) => {
         reviewChange: calcChange(totalReviews, prevReviews),
         releaseChange: calcChange(totalReleases, prevReleases)
       },
-      incidentDistribution,
-      topIncidentTypes,
+      observationIncidentDistribution: obsIncidentDist,
+      incidentDistribution: reviewOutcomes,
+      topIncidentTypes: reviewIncidentTypes,
       topLocations,
-      actionTakenOverview
+      actionTakenOverview,
+      multiAgencyResponse
     });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });

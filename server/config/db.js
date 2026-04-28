@@ -3,7 +3,8 @@ const mongoose = require('mongoose');
 const connectDB = async () => {
   try {
     mongoose.set('bufferCommands', false);
-    const conn = await mongoose.connect(process.env.MONGODB_URI, {
+    const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/cctv_system';
+    const conn = await mongoose.connect(mongoUri, {
       serverSelectionTimeoutMS: 5000,
       connectTimeoutMS: 5000
     });

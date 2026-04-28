@@ -22,7 +22,23 @@ const reviewSchema = new mongoose.Schema({
   // Requested Playback
   location: {
     type: String,
-    required: [true, 'Location is required'],
+    trim: true
+  },
+  camera: {
+    type: String,
+    trim: true
+  },
+  street: {
+    type: String,
+    trim: true
+  },
+  purok: {
+    type: String,
+    trim: true
+  },
+  barangay: {
+    type: String,
+    required: [true, 'Barangay is required'],
     trim: true
   },
   incidentDate: {
@@ -47,6 +63,11 @@ const reviewSchema = new mongoose.Schema({
   reviewedBy: {
     type: String,
     trim: true
+  },
+  result: {
+    type: String,
+    trim: true,
+    default: ''
   },
   // Footage Outcome
   outcome: {

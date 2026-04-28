@@ -1,0 +1,274 @@
+[
+  {
+    "category": "incidentType",
+    "value": "Vehicular Accident",
+    "isDefault": true,
+    "_id": "44634dc1-6c60-4a77-b715-4a81bf7bd76c",
+    "createdAt": "2026-03-13T00:59:38.797Z",
+    "updatedAt": "2026-03-13T00:59:38.797Z"
+  },
+  {
+    "category": "incidentType",
+    "value": "Theft / Robbery",
+    "isDefault": true,
+    "_id": "d2d64e01-8a20-4e98-9eaa-47a957504377",
+    "createdAt": "2026-03-13T00:59:38.802Z",
+    "updatedAt": "2026-03-13T00:59:38.802Z"
+  },
+  {
+    "category": "incidentType",
+    "value": "Assault / Physical Injury",
+    "isDefault": true,
+    "_id": "cd4ff35e-428e-40b9-9a43-5924a07e851b",
+    "createdAt": "2026-03-13T00:59:38.805Z",
+    "updatedAt": "2026-03-13T00:59:38.805Z"
+  },
+  {
+    "category": "incidentType",
+    "value": "Fire Incident",
+    "isDefault": true,
+    "_id": "ccbb69ed-3ea9-462f-aba2-5457b367b472",
+    "createdAt": "2026-03-13T00:59:38.808Z",
+    "updatedAt": "2026-03-13T00:59:38.808Z"
+  },
+  {
+    "category": "incidentType",
+    "value": "Illegal Parking",
+    "isDefault": true,
+    "_id": "469ce397-324c-4267-accd-aac5b648ec86",
+    "createdAt": "2026-03-13T00:59:38.812Z",
+    "updatedAt": "2026-03-13T00:59:38.813Z"
+  },
+  {
+    "category": "incidentType",
+    "value": "Traffic Violation",
+    "isDefault": true,
+    "_id": "8d3bdb94-e4ce-4218-8e79-3cf0abebba7a",
+    "createdAt": "2026-03-13T00:59:38.817Z",
+    "updatedAt": "2026-03-13T00:59:38.817Z"
+  },
+  {
+    "category": "incidentType",
+    "value": "Vandalism",
+    "isDefault": true,
+    "_id": "89e3bfac-c584-4394-b519-11d7b7eb4088",
+    "createdAt": "2026-03-13T00:59:38.822Z",
+    "updatedAt": "2026-03-13T00:59:38.822Z"
+  },
+  {
+    "category": "incidentType",
+    "value": "Suspicious Activity",
+    "isDefault": true,
+    "_id": "3ab1387a-7c9f-4631-9f59-3a9e8f8da7b7",
+    "createdAt": "2026-03-13T00:59:38.826Z",
+    "updatedAt": "2026-03-13T00:59:38.826Z"
+  },
+  {
+    "category": "incidentType",
+    "value": "Drowning",
+    "isDefault": true,
+    "_id": "ceb035d7-c992-4f88-9b5b-803f3aa7dadb",
+    "createdAt": "2026-03-13T00:59:38.830Z",
+    "updatedAt": "2026-03-13T00:59:38.830Z"
+  },
+  {
+    "category": "incidentType",
+    "value": "Flooding",
+    "isDefault": true,
+    "_id": "e885a921-b0c9-4673-b356-261737aa47b0",
+    "createdAt": "2026-03-13T00:59:38.835Z",
+    "updatedAt": "2026-03-13T00:59:38.835Z"
+  },
+  {
+    "category": "incidentType",
+    "value": "Structural Collapse",
+    "isDefault": true,
+    "_id": "a6bb7dc4-b9e7-46fb-aacf-b547b0426a62",
+    "createdAt": "2026-03-13T00:59:38.839Z",
+    "updatedAt": "2026-03-13T00:59:38.839Z"
+  },
+  {
+    "category": "incidentType",
+    "value": "Illegal Dumping",
+    "isDefault": true,
+    "_id": "8e1a0468-3e88-456a-8d36-18dd4524c5ff",
+    "createdAt": "2026-03-13T00:59:38.845Z",
+    "updatedAt": "2026-03-13T00:59:38.845Z"
+  },
+  {
+    "category": "incidentType",
+    "value": "Noise Disturbance",
+    "isDefault": true,
+    "_id": "25c75b85-bc96-4b0f-8f58-b0b6d0121b70",
+    "createdAt": "2026-03-13T00:59:38.852Z",
+    "updatedAt": "2026-03-13T00:59:38.852Z"
+  },
+  {
+    "category": "incidentType",
+    "value": "Medical Emergency",
+    "isDefault": true,
+    "_id": "6663a751-e276-4c39-853f-ac5388d1b7f2",
+    "createdAt": "2026-03-13T00:59:38.862Z",
+    "updatedAt": "2026-03-13T00:59:38.862Z"
+  },
+  {
+    "category": "location",
+    "value": "Barangay 1",
+    "isDefault": true,
+    "_id": "424c7668-5467-4b53-8f4c-8809cbc6f1a6",
+    "createdAt": "2026-03-13T00:59:38.868Z",
+    "updatedAt": "2026-03-13T00:59:38.868Z"
+  },
+  {
+    "category": "location",
+    "value": "Barangay 2",
+    "isDefault": true,
+    "_id": "f0c4d2ea-d007-4caa-b2dc-742df2235997",
+    "createdAt": "2026-03-13T00:59:38.875Z",
+    "updatedAt": "2026-03-13T00:59:38.875Z"
+  },
+  {
+    "category": "location",
+    "value": "Barangay 3",
+    "isDefault": true,
+    "_id": "935d26ba-3b7c-42ef-9bdf-be030840579d",
+    "createdAt": "2026-03-13T00:59:38.880Z",
+    "updatedAt": "2026-03-13T00:59:38.880Z"
+  },
+  {
+    "category": "location",
+    "value": "Barangay 4",
+    "isDefault": true,
+    "_id": "ecdb49d5-ad66-4830-a064-ff1741805fd4",
+    "createdAt": "2026-03-13T00:59:38.884Z",
+    "updatedAt": "2026-03-13T00:59:38.884Z"
+  },
+  {
+    "category": "location",
+    "value": "Barangay 5",
+    "isDefault": true,
+    "_id": "47046fa1-04e9-4e2f-87e4-18f95bddcc76",
+    "createdAt": "2026-03-13T00:59:38.896Z",
+    "updatedAt": "2026-03-13T00:59:38.896Z"
+  },
+  {
+    "category": "location",
+    "value": "Barangay 6",
+    "isDefault": true,
+    "_id": "44c714b2-b5da-4dc2-ab62-e91d36dbf5f5",
+    "createdAt": "2026-03-13T00:59:38.908Z",
+    "updatedAt": "2026-03-13T00:59:38.908Z"
+  },
+  {
+    "category": "location",
+    "value": "Barangay 7",
+    "isDefault": true,
+    "_id": "5ece5302-3a2f-411a-b114-ad50dcf195c6",
+    "createdAt": "2026-03-13T00:59:38.913Z",
+    "updatedAt": "2026-03-13T00:59:38.913Z"
+  },
+  {
+    "category": "location",
+    "value": "Barangay 8",
+    "isDefault": true,
+    "_id": "79916d84-30c7-4a29-8047-500032a36775",
+    "createdAt": "2026-03-13T00:59:38.917Z",
+    "updatedAt": "2026-03-13T00:59:38.917Z"
+  },
+  {
+    "category": "location",
+    "value": "Barangay 9",
+    "isDefault": true,
+    "_id": "c87f46c2-9c42-498c-9018-713f394a4275",
+    "createdAt": "2026-03-13T00:59:38.928Z",
+    "updatedAt": "2026-03-13T00:59:38.928Z"
+  },
+  {
+    "category": "location",
+    "value": "Barangay 10",
+    "isDefault": true,
+    "_id": "3a8ad9a1-6a92-4f1d-b78d-e02017fc8956",
+    "createdAt": "2026-03-13T00:59:38.933Z",
+    "updatedAt": "2026-03-13T00:59:38.933Z"
+  },
+  {
+    "category": "actionTaken",
+    "value": "Monitored",
+    "isDefault": true,
+    "_id": "46a8b350-52f6-41b4-a44e-e44521d1308f",
+    "createdAt": "2026-03-13T00:59:38.942Z",
+    "updatedAt": "2026-03-13T00:59:38.942Z"
+  },
+  {
+    "category": "actionTaken",
+    "value": "Noted",
+    "isDefault": true,
+    "_id": "fdd19f71-7426-4722-a2f4-52581f7ae243",
+    "createdAt": "2026-03-13T00:59:38.952Z",
+    "updatedAt": "2026-03-13T00:59:38.952Z"
+  },
+  {
+    "category": "actionTaken",
+    "value": "10-5 to 911",
+    "isDefault": true,
+    "_id": "1a0df6c1-323c-4eee-bfe0-271161748698",
+    "createdAt": "2026-03-13T00:59:38.957Z",
+    "updatedAt": "2026-03-13T00:59:38.957Z"
+  },
+  {
+    "category": "incidentType",
+    "value": "Harrasment",
+    "isDefault": false,
+    "_id": "59ef675e-121f-43c9-a3bb-1222eb271eaf",
+    "createdAt": "2026-03-13T03:32:23.449Z",
+    "updatedAt": "2026-03-13T03:41:04.533Z"
+  },
+  {
+    "category": "incidentType",
+    "value": "Hit and Run",
+    "isDefault": false,
+    "_id": "3a9cf5fe-33a0-4c61-92d3-429036352ddf",
+    "createdAt": "2026-03-13T03:39:54.805Z",
+    "updatedAt": "2026-03-13T03:41:25.743Z"
+  },
+  {
+    "category": "location",
+    "value": "Barangay 11",
+    "isDefault": true,
+    "_id": "74b16d16-8a46-43b9-9333-ea9f822e89d3",
+    "createdAt": "2026-03-13T05:37:49.293Z",
+    "updatedAt": "2026-03-13T05:37:49.293Z"
+  },
+  {
+    "category": "dispatchTo",
+    "value": "TMC",
+    "isDefault": false,
+    "_id": "f7fa24ee-7de6-4435-8b7a-c924fd6462e2",
+    "createdAt": "2026-03-17T00:17:59.126Z",
+    "updatedAt": "2026-03-17T00:17:59.126Z"
+  },
+  {
+    "category": "dispatchTo",
+    "value": "EMS",
+    "isDefault": false,
+    "_id": "57a1ea99-6070-48f8-8823-78bb6a8c518d",
+    "createdAt": "2026-03-17T00:18:16.912Z",
+    "updatedAt": "2026-03-17T00:18:16.912Z"
+  },
+  {
+    "category": "location",
+    "value": "Casisang",
+    "isDefault": false,
+    "_id": "d0b2b5a4-03c4-4dc8-ac1d-8774944c9412",
+    "createdAt": "2026-03-17T00:22:27.408Z",
+    "updatedAt": "2026-03-17T00:22:27.408Z"
+  },
+  {
+    "category": "dispatchTo",
+    "value": "PNP",
+    "isDefault": false,
+    "_id": "153b9e91-d122-4a1c-ab8c-3c91e3f3f44c",
+    "createdAt": "2026-03-17T00:24:16.318Z",
+    "updatedAt": "2026-03-17T00:24:16.318Z"
+  }
+]

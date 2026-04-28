@@ -1,27 +1,52 @@
-const Observation = require('../models/Observation');
-const Review = require('../models/Review');
-const Release = require('../models/Release');
+const fileDb = require('../storage/fileDb');
 
 // Get report data
 exports.getReportData = async (req, res) => {
   try {
-    const { startDate, endDate } = req.query;
+    const { startDate, endDate, startTime, endTime } = req.query;
+    const inRange = (date, time) => {
+      if (!startDate || !endDate) return true;
+      if (!date) return false;
+      
+      const startDateTime = startTime ? `${startDate}T${startTime}` : `${startDate}T00:00`;
+      const endDateTime = endTime ? `${endDate}T${endTime}` : `${endDate}T23:59`;
+      const currentDateTime = time ? `${date}T${time}` : `${date}T00:00`;
 
-    let obsQuery = {};
-    let revQuery = {};
-    let relQuery = {};
+      return currentDateTime >= startDateTime && currentDateTime <= endDateTime;
+    };
 
-    if (startDate && endDate) {
-      obsQuery.date = { $gte: startDate, $lte: endDate };
-      revQuery.dateRequested = { $gte: startDate, $lte: endDate };
-      relQuery.releaseDate = { $gte: startDate, $lte: endDate };
+    let observations = fileDb.readCollection('observations')
+      .filter(o => inRange(o?.date, o?.time));
+
+    let reviews = fileDb.readCollection('reviews')
+      .filter(r => inRange(r?.dateRequested, r?.timeRequested));
+
+    let releases = fileDb.readCollection('releases')
+      .filter(r => inRange(r?.releaseDate?.split('T')[0], r?.releaseDate?.split('T')[1]?.slice(0,5)));
+
+    // Filter by user if not admin or team_leader
+    if (req.user.role !== 'admin' && req.user.role !== 'team_leader') {
+      const uId = req.user._id;
+      observations = observations.filter(o => o.userId === uId);
+      reviews = reviews.filter(r => r.userId === uId);
+      releases = releases.filter(r => r.userId === uId);
     }
 
-    const [observations, reviews, releases] = await Promise.all([
-      Observation.find(obsQuery).sort({ date: -1 }),
-      Review.find(revQuery).sort({ dateRequested: -1 }),
-      Release.find(relQuery).sort({ releaseDate: -1 })
-    ]);
+    observations.sort((a, b) => {
+      let cmp = String(b?.date || '').localeCompare(String(a?.date || ''));
+      if (cmp === 0) return String(b?.createdAt || '').localeCompare(String(a?.createdAt || ''));
+      return cmp;
+    });
+    reviews.sort((a, b) => {
+      let cmp = String(b?.dateRequested || '').localeCompare(String(a?.dateRequested || ''));
+      if (cmp === 0) return String(b?.createdAt || '').localeCompare(String(a?.createdAt || ''));
+      return cmp;
+    });
+    releases.sort((a, b) => {
+      let cmp = String(b?.releaseDate || '').localeCompare(String(a?.releaseDate || ''));
+      if (cmp === 0) return String(b?.createdAt || '').localeCompare(String(a?.createdAt || ''));
+      return cmp;
+    });
 
     // Aggregate incident types
     const incidentMap = {};
@@ -47,12 +72,60 @@ exports.getReportData = async (req, res) => {
       .map(([location, count]) => ({ location, count }))
       .sort((a, b) => b.count - a.count);
 
+    // Aggregate reviewer breakdown
+    const reviewerMap = {};
+    observations.forEach(item => {
+      const reviewer = item.observedBy;
+      if (reviewer) {
+        if (!reviewerMap[reviewer]) reviewerMap[reviewer] = { observations: 0, reviews: 0, releases: 0 };
+        reviewerMap[reviewer].observations++;
+      }
+    });
+    reviews.forEach(item => {
+      const reviewer = item.reviewedBy;
+      if (reviewer) {
+        if (!reviewerMap[reviewer]) reviewerMap[reviewer] = { observations: 0, reviews: 0, releases: 0 };
+        reviewerMap[reviewer].reviews++;
+      }
+    });
+    releases.forEach(item => {
+      const reviewer = item.releaserName || item.reviewedBy;
+      if (reviewer) {
+        if (!reviewerMap[reviewer]) reviewerMap[reviewer] = { observations: 0, reviews: 0, releases: 0 };
+        reviewerMap[reviewer].releases++;
+      }
+    });
+
+    const reviewerBreakdown = Object.entries(reviewerMap)
+      .map(([name, counts]) => ({ 
+        name, 
+        observations: counts.observations,
+        reviews: counts.reviews, 
+        releases: counts.releases, 
+        total: counts.observations + counts.reviews + counts.releases 
+      }))
+      .sort((a, b) => b.total - a.total);
+
+    // Specific observation breakdown
+    const observationMap = {};
+    observations.forEach(item => {
+      const type = item.incidentType;
+      if (type) {
+        observationMap[type] = (observationMap[type] || 0) + 1;
+      }
+    });
+    const observationBreakdown = Object.entries(observationMap)
+      .map(([type, count]) => ({ type, count }))
+      .sort((a, b) => b.count - a.count);
+
     res.json({
       summary: {
         totalObservations: observations.length,
         totalReviews: reviews.length,
         totalReleases: releases.length,
-        totalRecords: observations.length + reviews.length + releases.length
+        totalRecords: observations.length + reviews.length + releases.length,
+        reviewerBreakdown,
+        observationBreakdown
       },
       topIncidentTypes,
       topLocations,

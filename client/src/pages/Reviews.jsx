@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { getReviews, createReview, updateReview, deleteReview, releaseFootage } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import ReviewModal from '../modals/ReviewModal';
 import ReleaseModal from '../modals/ReleaseModal';
 import ConfirmDialog from '../components/ConfirmDialog';
 import Pagination from '../components/Pagination';
 import { toast } from 'react-toastify';
 import { Search, Plus, Edit3, Trash2, FileOutput, FileSearch } from 'lucide-react';
+import PageHeader from '../components/PageHeader';
 
 export default function Reviews() {
   const [reviews, setReviews] = useState([]);
@@ -19,6 +21,14 @@ export default function Reviews() {
   const [deleteId, setDeleteId] = useState(null);
   const [releaseModalOpen, setReleaseModalOpen] = useState(false);
   const [releaseId, setReleaseId] = useState(null);
+  const [isReadOnly, setIsReadOnly] = useState(false);
+  const { user } = useAuth();
+
+  const canEditEntry = (entry) => {
+    if (!user) return false;
+    if (user.role === 'admin' || user.role === 'team_leader') return true;
+    return entry.userId === user._id;
+  };
 
   const formatTimeInfo = (t) => {
     if (!t) return '';
@@ -69,6 +79,13 @@ export default function Reviews() {
   };
 
   const handleEdit = (review) => {
+    setIsReadOnly(false);
+    setEditData(review);
+    setModalOpen(true);
+  };
+
+  const handleRowClick = (review) => {
+    setIsReadOnly(true);
     setEditData(review);
     setModalOpen(true);
   };
@@ -95,9 +112,9 @@ export default function Reviews() {
     setReleaseModalOpen(true);
   };
 
-  const handleReleaseSubmit = async (releaseDate) => {
+  const handleReleaseSubmit = async (data) => {
     try {
-      await releaseFootage(releaseId, releaseDate);
+      await releaseFootage(releaseId, data);
       toast.success('Footage released successfully! Status updated and recorded in Release Logs.');
       setReleaseModalOpen(false);
       setReleaseId(null);
@@ -109,15 +126,11 @@ export default function Reviews() {
 
   return (
     <div>
-      <div className="page-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div>
-          <h2>Review Logs</h2>
-          <p>CCTV playback request records</p>
-        </div>
+      <PageHeader title="Review Logs" subtitle="CCTV playback request records">
         <button className="btn btn-primary" onClick={() => { setEditData(null); setModalOpen(true); }}>
           <Plus size={16} /> New Review Request
         </button>
-      </div>
+      </PageHeader>
 
       <div className="table-container">
         <div className="table-toolbar">
@@ -148,47 +161,67 @@ export default function Reviews() {
               <tr>
                 <th>Date Requested</th>
                 <th>Requestor</th>
-                <th>Location</th>
+                <th>Phone</th>
+                <th>Camera</th>
+                <th>Street</th>
+                <th>Purok</th>
+                <th>Barangay</th>
                 <th>Incident Date</th>
                 <th>Incident Type</th>
+                <th>Description</th>
+                <th>Captured</th>
                 <th>Status</th>
-                <th>Reviewed By</th>
+                <th>Operator</th>
+                <th>Result</th>
                 <th>Outcome</th>
+                <th>Comments</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {reviews.map((rev) => (
-                <tr key={rev._id}>
+                <tr key={rev._id} onClick={() => handleRowClick(rev)} style={{ cursor: 'pointer' }}>
                   <td>
                     {rev.dateRequested}<br />
                     <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{formatTimeInfo(rev.timeRequested)}</span>
                   </td>
                   <td>{rev.name}</td>
-                  <td>{rev.location}</td>
+                  <td>{rev.phoneNumber || '—'}</td>
+                  <td>{rev.camera || '—'}</td>
+                  <td>{rev.street || '—'}</td>
+                  <td>{rev.purok || '—'}</td>
+                  <td>{rev.barangay || rev.location || '—'}</td>
                   <td>
                     {rev.incidentDate}<br />
                     <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{formatTimeInfo(rev.incidentTime)}</span>
                   </td>
                   <td><span className="badge not-released">{rev.incidentType}</span></td>
+                  <td className="cell-long" title={rev.description}>{rev.description}</td>
+                  <td>{rev.caughtOnCam || '—'}</td>
                   <td>
                     <span className={`badge ${rev.status && rev.status !== 'Pending' ? rev.status.toLowerCase().replace(' ', '-') : 'not-released'}`}>
                       {rev.status === 'Pending' ? 'Not Released' : (rev.status || 'Not Released')}
                     </span>
                   </td>
                   <td>{rev.reviewedBy || '—'}</td>
+                  <td>{rev.result || '—'}</td>
                   <td>{rev.outcome || '—'}</td>
+                  <td className="cell-long" title={rev.comments}>{rev.comments || '—'}</td>
                   <td>
-                    <div className="table-actions">
-                      <button className="action-btn edit" onClick={() => handleEdit(rev)} title="Edit">
-                        <Edit3 size={15} />
-                      </button>
+                    <div className="table-actions" onClick={(e) => e.stopPropagation()}>
+                      {canEditEntry(rev) && (
+                        <button className="action-btn edit" onClick={() => handleEdit(rev)} title="Edit">
+                          <Edit3 size={15} />
+                        </button>
+                      )}
                       <button className="action-btn release" onClick={() => handleReleaseClick(rev._id)} title="Release Footage" disabled={rev.status === 'Released'}>
                         <FileOutput size={15} />
                       </button>
-                      <button className="action-btn delete" onClick={() => handleDeleteClick(rev._id)} title="Delete">
-                        <Trash2 size={15} />
-                      </button>
+                      {canEditEntry(rev) && (
+                        <button className="action-btn delete" onClick={() => handleDeleteClick(rev._id)} title="Delete">
+                          <Trash2 size={15} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -202,9 +235,10 @@ export default function Reviews() {
 
       <ReviewModal
         isOpen={modalOpen}
-        onClose={() => { setModalOpen(false); setEditData(null); }}
+        onClose={() => { setModalOpen(false); setEditData(null); setIsReadOnly(false); }}
         onSubmit={handleSubmit}
         editData={editData}
+        isReadOnly={isReadOnly}
       />
 
       <ConfirmDialog
@@ -213,6 +247,7 @@ export default function Reviews() {
         message="Are you sure you want to delete this review? This action cannot be undone."
         onConfirm={handleDeleteConfirm}
         onCancel={() => { setConfirmOpen(false); setDeleteId(null); }}
+        confirmLabel="Delete"
       />
 
       <ReleaseModal

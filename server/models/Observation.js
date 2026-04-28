@@ -11,7 +11,26 @@ const observationSchema = new mongoose.Schema({
   },
   location: {
     type: String,
-    required: [true, 'Location is required'],
+    trim: true
+  },
+  camera: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  street: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  purok: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  barangay: {
+    type: String,
+    required: [true, 'Barangay is required'],
     trim: true
   },
   incidentType: {
@@ -28,6 +47,16 @@ const observationSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Details are required'],
     trim: true
+  },
+  dispatchTo: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  dispatchTime: {
+    type: String,
+    trim: true,
+    default: ''
   }
 }, {
   timestamps: true

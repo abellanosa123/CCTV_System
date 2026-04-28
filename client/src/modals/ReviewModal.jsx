@@ -1,24 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { X, Clock, Plus, Edit3, Check, XCircle } from 'lucide-react';
 import { getDropdownOptions, addDropdownOption, updateDropdownOption } from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import { toast } from 'react-toastify';
 
 const initialForm = {
   dateRequested: '',
   timeRequested: '',
   name: '',
   phoneNumber: '',
-  location: '',
+  camera: '',
+  street: '',
+  purok: '',
+  barangay: '',
   incidentDate: '',
   incidentTime: '',
   incidentType: '',
   description: '',
   reviewedBy: '',
+  result: '',
   outcome: '',
   caughtOnCam: '',
   comments: ''
 };
 
-export default function ReviewModal({ isOpen, onClose, onSubmit, editData }) {
+export default function ReviewModal({ isOpen, onClose, onSubmit, editData, isReadOnly }) {
+  const { user } = useAuth();
   const [form, setForm] = useState(initialForm);
   const [incidentTypes, setIncidentTypes] = useState([]);
   const [locations, setLocations] = useState([]);
@@ -46,12 +53,16 @@ export default function ReviewModal({ isOpen, onClose, onSubmit, editData }) {
         timeRequested: editData.timeRequested || '',
         name: editData.name || '',
         phoneNumber: editData.phoneNumber || '',
-        location: editData.location || '',
+        camera: editData.camera || '',
+        street: editData.street || '',
+        purok: editData.purok || '',
+        barangay: editData.barangay || editData.location || '',
         incidentDate: editData.incidentDate || '',
         incidentTime: editData.incidentTime || '',
         incidentType: editData.incidentType || '',
         description: editData.description || '',
         reviewedBy: editData.reviewedBy || '',
+        result: editData.result || '',
         outcome: editData.outcome || '',
         caughtOnCam: editData.caughtOnCam || '',
         comments: editData.comments || ''
@@ -61,7 +72,8 @@ export default function ReviewModal({ isOpen, onClose, onSubmit, editData }) {
       setForm({
         ...initialForm,
         dateRequested: now.toISOString().split('T')[0],
-        timeRequested: now.toTimeString().slice(0, 5)
+        timeRequested: now.toTimeString().slice(0, 5),
+        reviewedBy: user?.name || ''
       });
     }
     setShowCustomIncident(false);
@@ -107,8 +119,9 @@ export default function ReviewModal({ isOpen, onClose, onSubmit, editData }) {
       setForm((prev) => ({ ...prev, incidentType: customIncident.trim() }));
       setCustomIncident('');
       setShowCustomIncident(false);
+      toast.success('Incident type added successfully');
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to add option');
+      toast.error(err.response?.data?.message || 'Failed to add option');
     }
   };
 
@@ -116,10 +129,10 @@ export default function ReviewModal({ isOpen, onClose, onSubmit, editData }) {
     const val = e.target.value;
     if (val === '__other__') {
       setShowCustomLocation(true);
-      setForm((prev) => ({ ...prev, location: '' }));
+      setForm((prev) => ({ ...prev, barangay: '' }));
     } else {
       setShowCustomLocation(false);
-      setForm((prev) => ({ ...prev, location: val }));
+      setForm((prev) => ({ ...prev, barangay: val }));
     }
   };
 
@@ -128,11 +141,12 @@ export default function ReviewModal({ isOpen, onClose, onSubmit, editData }) {
     try {
       await addDropdownOption('location', customLocation.trim());
       await loadDropdownOptions();
-      setForm((prev) => ({ ...prev, location: customLocation.trim() }));
+      setForm((prev) => ({ ...prev, barangay: customLocation.trim() }));
       setCustomLocation('');
       setShowCustomLocation(false);
+      toast.success('Barangay added successfully');
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to add option');
+      toast.error(err.response?.data?.message || 'Failed to add option');
     }
   };
 
@@ -146,8 +160,9 @@ export default function ReviewModal({ isOpen, onClose, onSubmit, editData }) {
       await loadDropdownOptions();
       setEditingIncident(null);
       setEditIncidentValue('');
+      toast.success('Incident type updated successfully');
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to update option');
+      toast.error(err.response?.data?.message || 'Failed to update option');
     }
   };
 
@@ -155,14 +170,15 @@ export default function ReviewModal({ isOpen, onClose, onSubmit, editData }) {
     if (!editLocationValue.trim()) return;
     try {
       await updateDropdownOption(opt._id, editLocationValue.trim());
-      if (form.location === opt.value) {
-        setForm((prev) => ({ ...prev, location: editLocationValue.trim() }));
+      if (form.barangay === opt.value) {
+        setForm((prev) => ({ ...prev, barangay: editLocationValue.trim() }));
       }
       await loadDropdownOptions();
       setEditingLocation(null);
       setEditLocationValue('');
+      toast.success('Barangay updated successfully');
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to update option');
+      toast.error(err.response?.data?.message || 'Failed to update option');
     }
   };
 
@@ -177,7 +193,7 @@ export default function ReviewModal({ isOpen, onClose, onSubmit, editData }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()} style={{maxWidth: '780px'}}>
         <div className="modal-header">
-          <h3>{editData ? 'Edit Review Request' : 'CCTV Review Request Form'}</h3>
+          <h3>{isReadOnly ? 'Review Request Details' : editData ? 'Edit Review Request' : 'CCTV Review Request Form'}</h3>
           <button className="modal-close" onClick={onClose}><X size={18} /></button>
         </div>
         <form onSubmit={handleSubmit}>
@@ -188,47 +204,62 @@ export default function ReviewModal({ isOpen, onClose, onSubmit, editData }) {
 
               <div className="form-group">
                 <label className="form-label">Date Requested *</label>
-                <input type="date" name="dateRequested" className="form-input" value={form.dateRequested} onChange={handleChange} required />
+                <input type="date" name="dateRequested" className="form-input" value={form.dateRequested} onChange={handleChange} required disabled={isReadOnly} />
               </div>
               <div className="form-group">
                 <label className="form-label">Time *</label>
                 <div className="time-input-wrapper">
                   <Clock size={16} className="time-icon" />
-                  <input type="time" name="timeRequested" className="form-input time-input" value={form.timeRequested} onChange={handleChange} required />
+                  <input type="time" name="timeRequested" className="form-input time-input" value={form.timeRequested} onChange={handleChange} required disabled={isReadOnly} />
                 </div>
               </div>
               <div className="form-group">
                 <label className="form-label">Name *</label>
-                <input type="text" name="name" className="form-input" value={form.name} onChange={handleChange} placeholder="Full name" required />
+                <input type="text" name="name" className="form-input" value={form.name} onChange={handleChange} placeholder="Full name" required disabled={isReadOnly} />
               </div>
               <div className="form-group">
                 <label className="form-label">Phone Number</label>
-                <input type="text" name="phoneNumber" className="form-input" value={form.phoneNumber} onChange={handleChange} placeholder="09XX-XXX-XXXX" />
+                <input type="text" name="phoneNumber" className="form-input" value={form.phoneNumber} onChange={handleChange} placeholder="09XX-XXX-XXXX" disabled={isReadOnly} />
               </div>
 
               {/* Requested Playback Section */}
               <div className="form-section-title">Requested Playback</div>
 
-              <div className="form-group full-width">
+              <div className="form-group">
+                <label className="form-label">Camera</label>
+                <input type="text" name="camera" className="form-input" value={form.camera} onChange={handleChange} placeholder="Camera ID/Location" disabled={isReadOnly} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Street</label>
+                <input type="text" name="street" className="form-input" value={form.street} onChange={handleChange} placeholder="Street name" disabled={isReadOnly} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Purok</label>
+                <input type="text" name="purok" className="form-input" value={form.purok} onChange={handleChange} placeholder="Purok" disabled={isReadOnly} />
+              </div>
+
+              <div className="form-group">
                 <label className="form-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span>Location of Incident *</span>
-                  <button type="button" className="dropdown-manage-btn" onClick={() => setShowLocationManager(!showLocationManager)}>
-                    <Edit3 size={12} /> {showLocationManager ? 'Close' : 'Edit Choices'}
-                  </button>
+                  <span>Barangay *</span>
+                  {!isReadOnly && (
+                    <button type="button" className="dropdown-manage-btn" onClick={() => setShowLocationManager(!showLocationManager)}>
+                      <Edit3 size={12} /> {showLocationManager ? 'Close' : 'Edit Choices'}
+                    </button>
+                  )}
                 </label>
                 {!showCustomLocation ? (
-                  <select name="location" className="form-select" value={form.location} onChange={handleLocationChange} required>
-                    <option value="">Select location</option>
+                  <select name="barangay" className="form-select" value={form.barangay} onChange={handleLocationChange} required disabled={isReadOnly}>
+                    <option value="">Select barangay</option>
                     {locations.map((opt) => (
                       <option key={opt._id} value={opt.value}>{opt.value}</option>
                     ))}
-                    <option value="__other__">— Others (Add New) —</option>
+                    {!isReadOnly && <option value="__other__">— Others (Add New) —</option>}
                   </select>
                 ) : (
                   <div className="custom-input-row">
-                    <input type="text" className="form-input" value={customLocation} onChange={(e) => setCustomLocation(e.target.value)} placeholder="Type custom location..." autoFocus />
-                    <button type="button" className="btn btn-sm btn-primary" onClick={handleAddCustomLocation}><Plus size={14} /> Add</button>
-                    <button type="button" className="btn btn-sm btn-secondary" onClick={() => { setShowCustomLocation(false); setCustomLocation(''); }}><XCircle size={14} /></button>
+                    <input type="text" className="form-input" value={customLocation} onChange={(e) => setCustomLocation(e.target.value)} placeholder="Type custom barangay..." autoFocus disabled={isReadOnly} />
+                    {!isReadOnly && <button type="button" className="btn btn-sm btn-primary" onClick={handleAddCustomLocation}><Plus size={14} /> Add</button>}
+                    {!isReadOnly && <button type="button" className="btn btn-sm btn-secondary" onClick={() => { setShowCustomLocation(false); setCustomLocation(''); }}><XCircle size={14} /></button>}
                   </div>
                 )}
                 {showLocationManager && (
@@ -255,36 +286,38 @@ export default function ReviewModal({ isOpen, onClose, onSubmit, editData }) {
 
               <div className="form-group">
                 <label className="form-label">Date of Incident *</label>
-                <input type="date" name="incidentDate" className="form-input" value={form.incidentDate} onChange={handleChange} required />
+                <input type="date" name="incidentDate" className="form-input" value={form.incidentDate} onChange={handleChange} required disabled={isReadOnly} />
               </div>
               <div className="form-group">
                 <label className="form-label">Time of Incident *</label>
                 <div className="time-input-wrapper">
                   <Clock size={16} className="time-icon" />
-                  <input type="time" name="incidentTime" className="form-input time-input" value={form.incidentTime} onChange={handleChange} required />
+                  <input type="time" name="incidentTime" className="form-input time-input" value={form.incidentTime} onChange={handleChange} required disabled={isReadOnly} />
                 </div>
               </div>
 
               <div className="form-group full-width">
                 <label className="form-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <span>Incident Type *</span>
-                  <button type="button" className="dropdown-manage-btn" onClick={() => setShowIncidentManager(!showIncidentManager)}>
-                    <Edit3 size={12} /> {showIncidentManager ? 'Close' : 'Edit Choices'}
-                  </button>
+                  {!isReadOnly && (
+                    <button type="button" className="dropdown-manage-btn" onClick={() => setShowIncidentManager(!showIncidentManager)}>
+                      <Edit3 size={12} /> {showIncidentManager ? 'Close' : 'Edit Choices'}
+                    </button>
+                  )}
                 </label>
                 {!showCustomIncident ? (
-                  <select name="incidentType" className="form-select" value={form.incidentType} onChange={handleIncidentTypeChange} required>
+                  <select name="incidentType" className="form-select" value={form.incidentType} onChange={handleIncidentTypeChange} required disabled={isReadOnly}>
                     <option value="">Select incident type</option>
                     {incidentTypes.map((opt) => (
                       <option key={opt._id} value={opt.value}>{opt.value}</option>
                     ))}
-                    <option value="__other__">— Others (Add New) —</option>
+                    {!isReadOnly && <option value="__other__">— Others (Add New) —</option>}
                   </select>
                 ) : (
                   <div className="custom-input-row">
-                    <input type="text" className="form-input" value={customIncident} onChange={(e) => setCustomIncident(e.target.value)} placeholder="Type custom incident type..." autoFocus />
-                    <button type="button" className="btn btn-sm btn-primary" onClick={handleAddCustomIncident}><Plus size={14} /> Add</button>
-                    <button type="button" className="btn btn-sm btn-secondary" onClick={() => { setShowCustomIncident(false); setCustomIncident(''); }}><XCircle size={14} /></button>
+                    <input type="text" className="form-input" value={customIncident} onChange={(e) => setCustomIncident(e.target.value)} placeholder="Type custom incident type..." autoFocus disabled={isReadOnly} />
+                    {!isReadOnly && <button type="button" className="btn btn-sm btn-primary" onClick={handleAddCustomIncident}><Plus size={14} /> Add</button>}
+                    {!isReadOnly && <button type="button" className="btn btn-sm btn-secondary" onClick={() => { setShowCustomIncident(false); setCustomIncident(''); }}><XCircle size={14} /></button>}
                   </div>
                 )}
                 {showIncidentManager && (
@@ -311,7 +344,7 @@ export default function ReviewModal({ isOpen, onClose, onSubmit, editData }) {
 
               <div className="form-group full-width">
                 <label className="form-label">Description of Incident *</label>
-                <textarea name="description" className="form-textarea" value={form.description} onChange={handleChange} placeholder="Describe the incident..." rows={3} required />
+                <textarea name="description" className="form-textarea" value={form.description} onChange={handleChange} placeholder="Describe the incident..." rows={3} required disabled={isReadOnly} />
               </div>
 
               {/* Reviewed By */}
@@ -319,14 +352,26 @@ export default function ReviewModal({ isOpen, onClose, onSubmit, editData }) {
 
               <div className="form-group">
                 <label className="form-label">Reviewed By</label>
-                <input type="text" name="reviewedBy" className="form-input" value={form.reviewedBy} onChange={handleChange} placeholder="Reviewer name" />
+                <input 
+                  type="text" 
+                  name="reviewedBy" 
+                  className="form-input" 
+                  value={form.reviewedBy} 
+                  onChange={handleChange}
+                  disabled={!(user?.role === 'admin' && !isReadOnly)}
+                  style={!(user?.role === 'admin' && !isReadOnly) ? { opacity: 0.7, cursor: 'not-allowed' } : {}}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Result</label>
+                <input type="text" name="result" className="form-input" value={form.result} onChange={handleChange} placeholder="Enter review result" disabled={isReadOnly} />
               </div>
               <div className="form-group">
                 <label className="form-label">Caught on Cam</label>
                 <div className="checkbox-group">
                   {['Captured', 'Uncaptured'].map((opt) => (
                     <label key={opt} className="checkbox-item">
-                      <input type="radio" name="caughtOnCam" value={opt} checked={form.caughtOnCam === opt} onChange={handleChange} />
+                      <input type="radio" name="caughtOnCam" value={opt} checked={form.caughtOnCam === opt} onChange={handleChange} disabled={isReadOnly} />
                       {opt}
                     </label>
                   ))}
@@ -337,7 +382,7 @@ export default function ReviewModal({ isOpen, onClose, onSubmit, editData }) {
                 <div className="checkbox-group">
                   {['Useful', 'Somehow Useful', 'Not Useful'].map((opt) => (
                     <label key={opt} className="checkbox-item">
-                      <input type="radio" name="outcome" value={opt} checked={form.outcome === opt} onChange={handleChange} />
+                      <input type="radio" name="outcome" value={opt} checked={form.outcome === opt} onChange={handleChange} disabled={isReadOnly} />
                       {opt}
                     </label>
                   ))}
@@ -349,15 +394,17 @@ export default function ReviewModal({ isOpen, onClose, onSubmit, editData }) {
 
               <div className="form-group full-width">
                 <label className="form-label">Comments</label>
-                <textarea name="comments" className="form-textarea" value={form.comments} onChange={handleChange} placeholder="Client comments or feedback..." rows={3} />
+                <textarea name="comments" className="form-textarea" value={form.comments} onChange={handleChange} placeholder="Client comments or feedback..." rows={3} disabled={isReadOnly} />
               </div>
             </div>
           </div>
           <div className="modal-footer">
-            <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn btn-primary">
-              {editData ? 'Update Review' : 'Submit Review'}
-            </button>
+            <button type="button" className="btn btn-secondary" onClick={onClose}>{isReadOnly ? 'Close' : 'Cancel'}</button>
+            {!isReadOnly && (
+              <button type="submit" className="btn btn-primary">
+                {editData ? 'Update Review' : 'Submit Review'}
+              </button>
+            )}
           </div>
         </form>
       </div>

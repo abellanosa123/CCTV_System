@@ -1,0 +1,82 @@
+[
+  {
+    "recipient": "49898bca-2e22-44d1-b521-cf1a9459d1e6",
+    "sender": "admin1",
+    "title": "test",
+    "message": "test",
+    "isRead": true,
+    "_id": "e0406ee6-79fd-4dea-9f51-f42fbed25c28",
+    "createdAt": "2026-03-16T04:31:27.054Z",
+    "updatedAt": "2026-03-16T04:43:56.013Z"
+  },
+  {
+    "recipient": "target",
+    "sender": "admin1",
+    "title": "t",
+    "message": "m",
+    "isRead": false,
+    "_id": "d6b03e4f-3e1d-4981-9c15-3b63116bc659",
+    "createdAt": "2026-03-16T04:38:20.626Z",
+    "updatedAt": "2026-03-16T04:38:20.627Z"
+  },
+  {
+    "recipient": "target",
+    "sender": "admin1",
+    "title": "t",
+    "message": "m",
+    "isRead": false,
+    "_id": "9948a49a-3ca0-4b02-a123-59c6cb78e4df",
+    "createdAt": "2026-03-16T04:40:10.680Z",
+    "updatedAt": "2026-03-16T04:40:10.681Z"
+  },
+  {
+    "recipient": "49898bca-2e22-44d1-b521-cf1a9459d1e6",
+    "sender": "admin1",
+    "title": "Message from Admin",
+    "message": "hi",
+    "isRead": true,
+    "_id": "6b3120e1-67a0-48ed-b0d4-ffd1e0fd94cb",
+    "createdAt": "2026-03-16T04:44:16.186Z",
+    "updatedAt": "2026-03-16T04:44:22.255Z"
+  },
+  {
+    "recipient": "49898bca-2e22-44d1-b521-cf1a9459d1e6",
+    "sender": "admin1",
+    "title": "Message from Admin",
+    "message": "hi",
+    "isRead": true,
+    "_id": "97f3d534-e703-40ce-8ebb-10086831777e",
+    "createdAt": "2026-03-16T05:01:54.848Z",
+    "updatedAt": "2026-03-16T05:02:03.277Z"
+  },
+  {
+    "recipient": "6bd292a4-37b0-46b8-bce2-c830834bc3df",
+    "sender": "admin1",
+    "title": "Account Update",
+    "message": "Your account status was updated to approved.",
+    "isRead": true,
+    "_id": "cfde857a-6f1d-473a-bc91-cd4e34c0ba89",
+    "createdAt": "2026-03-16T05:29:52.257Z",
+    "updatedAt": "2026-03-16T05:31:27.836Z"
+  },
+  {
+    "recipient": "87ec69e3-a5d8-4801-84b6-ebd14409e343",
+    "sender": "admin1",
+    "title": "Account Update",
+    "message": "Your account status was updated to approved.",
+    "isRead": true,
+    "_id": "960a33e4-c908-4c81-a068-0e557eb590a3",
+    "createdAt": "2026-03-16T05:33:28.760Z",
+    "updatedAt": "2026-03-16T05:33:37.500Z"
+  },
+  {
+    "recipient": "f45bff19-278e-4231-bb95-62a371a5c0fc",
+    "sender": "admin1",
+    "title": "Account Update",
+    "message": "Your account status was updated to approved. Your role was updated to user.",
+    "isRead": true,
+    "_id": "417b4d1a-1466-478a-aa1f-ff4b2bae26c2",
+    "createdAt": "2026-03-16T05:55:13.763Z",
+    "updatedAt": "2026-03-16T05:55:26.940Z"
+  }
+]

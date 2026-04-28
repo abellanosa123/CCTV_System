@@ -4,7 +4,7 @@ const dropdownOptionSchema = new mongoose.Schema({
   category: {
     type: String,
     required: true,
-    enum: ['incidentType', 'location', 'actionTaken']
+    enum: ['incidentType', 'location', 'actionTaken', 'dispatchTo']
   },
   value: {
     type: String,

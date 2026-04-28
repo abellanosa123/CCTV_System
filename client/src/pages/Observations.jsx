@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { getObservations, createObservation, updateObservation, deleteObservation } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import ObservationModal from '../modals/ObservationModal';
 import ConfirmDialog from '../components/ConfirmDialog';
 import Pagination from '../components/Pagination';
 import { toast } from 'react-toastify';
 import { Search, Plus, Edit3, Trash2, Eye } from 'lucide-react';
+import PageHeader from '../components/PageHeader';
 
 export default function Observations() {
   const [observations, setObservations] = useState([]);
@@ -16,6 +18,14 @@ export default function Observations() {
   const [editData, setEditData] = useState(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
+  const [isReadOnly, setIsReadOnly] = useState(false);
+  const { user } = useAuth();
+
+  const canEditEntry = (entry) => {
+    if (!user) return false;
+    if (user.role === 'admin' || user.role === 'team_leader') return true;
+    return entry.userId === user._id;
+  };
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -55,6 +65,13 @@ export default function Observations() {
   };
 
   const handleEdit = (obs) => {
+    setIsReadOnly(false);
+    setEditData(obs);
+    setModalOpen(true);
+  };
+
+  const handleRowClick = (obs) => {
+    setIsReadOnly(true);
     setEditData(obs);
     setModalOpen(true);
   };
@@ -76,17 +93,26 @@ export default function Observations() {
     }
   };
 
+  const formatTime12 = (timeStr) => {
+    if (!timeStr) return '—';
+    try {
+      let [h, m] = timeStr.split(':');
+      h = parseInt(h, 10);
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12 || 12;
+      return `${h}:${m} ${ampm}`;
+    } catch {
+      return timeStr;
+    }
+  };
+
   return (
     <div>
-      <div className="page-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div>
-          <h2>Observation Logs</h2>
-          <p>CCTV operator-generated incident observations</p>
-        </div>
+      <PageHeader title="Observation Logs" subtitle="CCTV operator-generated incident observations">
         <button className="btn btn-primary" onClick={() => { setEditData(null); setModalOpen(true); }}>
           <Plus size={16} /> New Observation
         </button>
-      </div>
+      </PageHeader>
 
       <div className="table-container">
         <div className="table-toolbar">
@@ -117,30 +143,46 @@ export default function Observations() {
               <tr>
                 <th>Date</th>
                 <th>Time</th>
-                <th>Location</th>
+                <th>Camera</th>
+                <th>Street</th>
+                <th>Purok</th>
+                <th>Barangay</th>
                 <th>Incident Type</th>
                 <th>Details</th>
                 <th>Action Taken</th>
+                <th>Dispatch To</th>
+                <th>Dispatch Time</th>
+                <th>Observed By</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {observations.map((obs) => (
-                <tr key={obs._id}>
+                <tr key={obs._id} onClick={() => handleRowClick(obs)} style={{ cursor: 'pointer' }}>
                   <td>{obs.date}</td>
-                  <td>{obs.time}</td>
-                  <td>{obs.location}</td>
+                  <td>{formatTime12(obs.time)}</td>
+                  <td>{obs.camera || '—'}</td>
+                  <td>{obs.street || '—'}</td>
+                  <td>{obs.purok || '—'}</td>
+                  <td>{obs.barangay || obs.location || '—'}</td>
                   <td><span className="badge pending">{obs.incidentType}</span></td>
-                  <td title={obs.details}>{obs.details}</td>
-                  <td><span className="badge reviewed">{obs.actionTaken || '—'}</span></td>
+                  <td className="cell-long" title={obs.details}>{obs.details}</td>
+                  <td className="cell-long" title={obs.actionTaken}>{obs.actionTaken || '—'}</td>
+                  <td className="cell-long" title={obs.dispatchTo}>{obs.dispatchTo || '—'}</td>
+                  <td>{formatTime12(obs.dispatchTime)}</td>
+                  <td>{obs.observedBy || '—'}</td>
                   <td>
-                    <div className="table-actions">
-                      <button className="action-btn edit" onClick={() => handleEdit(obs)} title="Edit">
-                        <Edit3 size={15} />
-                      </button>
-                      <button className="action-btn delete" onClick={() => handleDeleteClick(obs._id)} title="Delete">
-                        <Trash2 size={15} />
-                      </button>
+                    <div className="table-actions" onClick={(e) => e.stopPropagation()}>
+                      {canEditEntry(obs) && (
+                        <>
+                          <button className="action-btn edit" onClick={() => handleEdit(obs)} title="Edit">
+                            <Edit3 size={15} />
+                          </button>
+                          <button className="action-btn delete" onClick={() => handleDeleteClick(obs._id)} title="Delete">
+                            <Trash2 size={15} />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -154,9 +196,10 @@ export default function Observations() {
 
       <ObservationModal
         isOpen={modalOpen}
-        onClose={() => { setModalOpen(false); setEditData(null); }}
+        onClose={() => { setModalOpen(false); setEditData(null); setIsReadOnly(false); }}
         onSubmit={handleSubmit}
         editData={editData}
+        isReadOnly={isReadOnly}
       />
 
       <ConfirmDialog
@@ -165,6 +208,7 @@ export default function Observations() {
         message="Are you sure you want to delete this observation? This action cannot be undone."
         onConfirm={handleDeleteConfirm}
         onCancel={() => { setConfirmOpen(false); setDeleteId(null); }}
+        confirmLabel="Delete"
       />
     </div>
   );

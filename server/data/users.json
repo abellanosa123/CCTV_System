@@ -1,0 +1,31 @@
+[
+  {
+    "_id": "admin1",
+    "name": "Admin Carl",
+    "username": "Admin Carl",
+    "password": "$2b$10$MXO6wmdw1H9yIyi6dAbQku921bfQompbC6Ft5B44hWrVsLHctbToq",
+    "role": "admin",
+    "status": "approved",
+    "createdAt": "2026-03-16T05:44:43.409Z"
+  },
+  {
+    "name": "Carl Abellanosa",
+    "username": "Carl",
+    "password": "$2b$10$d6TOFqddjO2tw44wjmNhcuUTKyfFZ/8vkhPBg1EEvwOHUXLfmqHFi",
+    "role": "user",
+    "status": "approved",
+    "_id": "1d5f99c5-5578-48c2-826f-e0000846c12f",
+    "createdAt": "2026-03-16T07:39:26.492Z",
+    "updatedAt": "2026-03-16T07:39:26.492Z"
+  },
+  {
+    "name": "Caloy Abellanosa",
+    "username": "Caloy",
+    "password": "$2b$10$wmJT5gpTZXSpsPGxjV6sIeAz0M46Dp4vVlesOIW6nI9swCGlS2kqO",
+    "role": "team_leader",
+    "status": "approved",
+    "_id": "eb323a52-8fb7-46da-b40e-c516c60bf40b",
+    "createdAt": "2026-03-17T03:37:11.082Z",
+    "updatedAt": "2026-03-17T03:37:11.082Z"
+  }
+]

@@ -1,12 +1,17 @@
 import React, { useState } from 'react';
 import { X, Calendar } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export default function ReleaseModal({ isOpen, onClose, onSubmit }) {
+  const { user } = useAuth();
   const [releaseDate, setReleaseDate] = useState('');
+  const [releaserName, setReleaserName] = useState(user?.name || '');
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(releaseDate);
+    onSubmit({ releaseDate, releaserName });
+    // Reset name for next time, but maybe keep it? Usually better to reset.
+    setReleaserName('');
   };
 
   if (!isOpen) return null;
@@ -21,7 +26,7 @@ export default function ReleaseModal({ isOpen, onClose, onSubmit }) {
         <form onSubmit={handleSubmit}>
           <div className="modal-body">
             <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '16px' }}>
-              Select the release date for this footage. The review status will be updated to "Released" and a copy will be recorded in Release Logs.
+              Enter the release details below. The review status will be updated to "Released" and a record will be added to Release Logs.
             </p>
             <div className="form-group">
               <label className="form-label">Release Date & Time *</label>
@@ -30,6 +35,18 @@ export default function ReleaseModal({ isOpen, onClose, onSubmit }) {
                 className="form-input"
                 value={releaseDate}
                 onChange={(e) => setReleaseDate(e.target.value)}
+                required
+              />
+            </div>
+            <div className="form-group" style={{ marginTop: '16px' }}>
+              <label className="form-label">Released By (Name of Releaser) *</label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="Enter name of person releasing footage"
+                value={releaserName || (user?.name || '')}
+                disabled
+                style={{ opacity: 0.7, cursor: 'not-allowed' }}
                 required
               />
             </div>

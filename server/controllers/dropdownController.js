@@ -1,4 +1,5 @@
-const DropdownOption = require('../models/DropdownOption');
+const fileDb = require('../storage/fileDb');
+const COLLECTION = 'dropdownOptions';
 
 // Default incident types
 const DEFAULT_INCIDENT_TYPES = [
@@ -29,7 +30,8 @@ const DEFAULT_LOCATIONS = [
   'Barangay 7',
   'Barangay 8',
   'Barangay 9',
-  'Barangay 10'
+  'Barangay 10',
+  'Barangay 11'
 ];
 
 // Default action taken options
@@ -42,27 +44,23 @@ const DEFAULT_ACTIONS = [
 // Seed defaults if not exist
 const seedDefaults = async () => {
   try {
-    for (const type of DEFAULT_INCIDENT_TYPES) {
-      await DropdownOption.findOneAndUpdate(
-        { category: 'incidentType', value: type },
-        { category: 'incidentType', value: type, isDefault: true },
-        { upsert: true }
-      );
-    }
-    for (const loc of DEFAULT_LOCATIONS) {
-      await DropdownOption.findOneAndUpdate(
-        { category: 'location', value: loc },
-        { category: 'location', value: loc, isDefault: true },
-        { upsert: true }
-      );
-    }
-    for (const action of DEFAULT_ACTIONS) {
-      await DropdownOption.findOneAndUpdate(
-        { category: 'actionTaken', value: action },
-        { category: 'actionTaken', value: action, isDefault: true },
-        { upsert: true }
-      );
-    }
+    const rows = fileDb.readCollection(COLLECTION);
+    const desired = [
+      ...DEFAULT_INCIDENT_TYPES.map(value => ({ category: 'incidentType', value })),
+      ...DEFAULT_LOCATIONS.map(value => ({ category: 'location', value })),
+      ...DEFAULT_ACTIONS.map(value => ({ category: 'actionTaken', value }))
+    ];
+
+    desired.forEach(({ category, value }) => {
+      const existing = rows.find(r => r?.category === category && r?.value === value);
+      if (!existing) {
+        fileDb.create(COLLECTION, { category, value, isDefault: true });
+        return;
+      }
+      if (!existing.isDefault) {
+        fileDb.updateById(COLLECTION, existing._id, { isDefault: true });
+      }
+    });
   } catch (err) {
     console.error('Error seeding dropdown defaults:', err.message);
   }
@@ -72,11 +70,13 @@ const seedDefaults = async () => {
 exports.getOptions = async (req, res) => {
   try {
     const { category } = req.params;
-    if (!['incidentType', 'location', 'actionTaken'].includes(category)) {
+    if (!['incidentType', 'location', 'actionTaken', 'dispatchTo'].includes(category)) {
       return res.status(400).json({ message: 'Invalid category' });
     }
     await seedDefaults();
-    const options = await DropdownOption.find({ category }).sort({ isDefault: -1, value: 1 });
+    const options = fileDb.readCollection(COLLECTION)
+      .filter(o => o?.category === category)
+      .sort((a, b) => String(a.value || '').localeCompare(String(b.value || '')));
     res.json(options);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -91,12 +91,12 @@ exports.addOption = async (req, res) => {
     if (!value || !value.trim()) {
       return res.status(400).json({ message: 'Value is required' });
     }
-    const existing = await DropdownOption.findOne({ category, value: value.trim() });
+    const trimmed = value.trim();
+    const existing = fileDb.readCollection(COLLECTION).find(o => o?.category === category && o?.value === trimmed);
     if (existing) {
       return res.status(400).json({ message: 'Option already exists' });
     }
-    const option = new DropdownOption({ category, value: value.trim(), isDefault: false });
-    await option.save();
+    const option = fileDb.create(COLLECTION, { category, value: trimmed, isDefault: false });
     res.status(201).json(option);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -111,11 +111,16 @@ exports.updateOption = async (req, res) => {
     if (!value || !value.trim()) {
       return res.status(400).json({ message: 'Value is required' });
     }
-    const option = await DropdownOption.findByIdAndUpdate(
-      id,
-      { value: value.trim() },
-      { new: true }
-    );
+    const trimmed = value.trim();
+    const current = fileDb.findById(COLLECTION, id);
+    if (!current) {
+      return res.status(404).json({ message: 'Option not found' });
+    }
+    const existing = fileDb.readCollection(COLLECTION).find(o => o?._id !== id && o?.category === current.category && o?.value === trimmed);
+    if (existing) {
+      return res.status(400).json({ message: 'Option already exists' });
+    }
+    const option = fileDb.updateById(COLLECTION, id, { value: trimmed });
     if (!option) {
       return res.status(404).json({ message: 'Option not found' });
     }
@@ -129,11 +134,11 @@ exports.updateOption = async (req, res) => {
 exports.deleteOption = async (req, res) => {
   try {
     const { id } = req.params;
-    const option = await DropdownOption.findById(id);
+    const option = fileDb.findById(COLLECTION, id);
     if (!option) {
       return res.status(404).json({ message: 'Option not found' });
     }
-    await DropdownOption.findByIdAndDelete(id);
+    fileDb.deleteById(COLLECTION, id);
     res.json({ message: 'Option deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
